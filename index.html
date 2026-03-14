@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Pong</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: monospace;
+      color: #fff;
+    }
+    canvas { border: 2px solid #fff; display: block; }
+    #info { margin-top: 12px; font-size: 13px; color: #aaa; text-align: center; }
+  </style>
+</head>
+<body>
+  <canvas id="pong" width="800" height="500"></canvas>
+  <div id="info"></div>
+
+  <script>
+    const canvas = document.getElementById('pong');
+    const ctx = canvas.getContext('2d');
+    const infoEl = document.getElementById('info');
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const PADDLE_W = 12;
+    const PADDLE_H = 80;
+    const COOP_PADDLE_H = 58; // smaller paddles in co-op
+    const BALL_SIZE = 10;
+    const PADDLE_SPEED = 5;
+    const WIN_SCORE = 7;
+
+    // ── Sound ────────────────────────────────────────────────────────────────
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playBeep(frequency, duration, type = 'square', volume = 0.3) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+      gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    const sound = {
+      paddle: () => playBeep(480, 0.08),
+      wall:   () => playBeep(300, 0.06),
+      score: () => {
+        const bufferSize = audioCtx.sampleRate * 0.8;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+        filter.frequency.linearRampToValueAtTime(2400, audioCtx.currentTime + 0.4);
+        filter.Q.value = 1.5;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.8);
+        noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+        noise.start(); noise.stop(audioCtx.currentTime + 0.8);
+        [440, 554, 660, 880].forEach((freq, i) => setTimeout(() => playBeep(freq, 0.25, 'sine', 0.2), i * 70));
+      },
+      win: () => {
+        playBeep(520, 0.15, 'sine');
+        setTimeout(() => playBeep(660, 0.15, 'sine'), 160);
+        setTimeout(() => playBeep(780, 0.3,  'sine'), 320);
+      },
+    };
+
+    // ── Game modes: 'solo' | 'duo' | 'coop' ──────────────────────────────────
+    const state = { mode: 'menu', paused: false, over: false, winner: null, gameMode: 'solo' };
+
+    const DIFFICULTIES = {
+      leicht: { speed: 2.8, errorMargin: 55, predictionNoise: 3 },
+      mittel: { speed: 4.2, errorMargin: 20, predictionNoise: 1 },
+      schwer: { speed: 6.5, errorMargin: 4,  predictionNoise: 0 },
+    };
+    let difficulty = 'mittel';
+    let botTarget = H / 2;
+    let botError = 0;
+
+    const ball = { x: W / 2, y: H / 2, vx: 0, vy: 0, speed: 3 };
+
+    // p1: left paddle (solo/duo), or upper-left paddle (coop)
+    // p2: right paddle (solo=bot, duo=human), or bot (coop)
+    // p3: lower-left paddle (coop only)
+    const p1 = { y: H / 2 - PADDLE_H / 2, score: 0, up: false, down: false };
+    const p2 = { y: H / 2 - PADDLE_H / 2, score: 0, up: false, down: false };
+    const p3 = { y: H / 2 + 10,           score: 0, up: false, down: false }; // coop second player
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function paddleH(paddle) {
+      return state.gameMode === 'coop' && (paddle === p1 || paddle === p3) ? COOP_PADDLE_H : PADDLE_H;
+    }
+
+    function resetBall(direction = 1) {
+      ball.x = W / 2; ball.y = H / 2;
+      botTarget = H / 2;
+      botError = (Math.random() * 2 - 1) * DIFFICULTIES[difficulty].errorMargin;
+      const angle = (Math.random() * 60 - 30) * (Math.PI / 180);
+      ball.vx = direction * ball.speed * Math.cos(angle);
+      ball.vy = ball.speed * Math.sin(angle);
+    }
+
+    function startGame() {
+      p1.score = 0; p2.score = 0;
+      if (state.gameMode === 'coop') {
+        p1.y = H / 2 - COOP_PADDLE_H - 5;
+        p3.y = H / 2 + 5;
+        p2.y = H / 2 - PADDLE_H / 2;
+      } else {
+        p1.y = H / 2 - PADDLE_H / 2;
+        p2.y = H / 2 - PADDLE_H / 2;
+      }
+      ball.speed = 3;
+      state.over = false; state.winner = null; state.paused = false;
+      state.mode = 'playing';
+      resetBall(Math.random() < 0.5 ? 1 : -1);
+      updateInfo();
+    }
+
+    function clampPaddle(paddle) {
+      const ph = paddleH(paddle);
+      if (paddle.y < 0) paddle.y = 0;
+      if (paddle.y + ph > H) paddle.y = H - ph;
+    }
+
+    function updateInfo() {
+      if (state.gameMode === 'solo') {
+        infoEl.textContent = `Spieler: W/S oder ↑/↓  |  Schwierigkeit: ${difficulty}  |  Enter: Pause`;
+      } else if (state.gameMode === 'coop') {
+        infoEl.textContent = `S1: W/S  |  S2: ↑/↓  |  Schwierigkeit: ${difficulty}  |  Enter: Pause`;
+      } else {
+        infoEl.textContent = 'Spieler 1: W/S  |  Spieler 2: ↑/↓  |  Enter: Pause';
+      }
+    }
+
+    // ── Bot AI ────────────────────────────────────────────────────────────────
+    function predictBallY() {
+      const p2x = W - 20 - PADDLE_W;
+      let x = ball.x, y = ball.y, vx = ball.vx, vy = ball.vy;
+      for (let i = 0; i < 600; i++) {
+        x += vx; y += vy;
+        if (y < 0)  { y = -y;         vy =  Math.abs(vy); }
+        if (y > H)  { y = 2 * H - y;  vy = -Math.abs(vy); }
+        if (x >= p2x) return y;
+        if (x <= 20) vx = Math.abs(vx);
+      }
+      return H / 2;
+    }
+
+    function updateBot() {
+      const diff = DIFFICULTIES[difficulty];
+      if (ball.vx > 0) {
+        const predicted = predictBallY();
+        botTarget = predicted + botError + (Math.random() * 2 - 1) * diff.predictionNoise;
+      } else {
+        botTarget = H / 2;
+      }
+      const center = p2.y + PADDLE_H / 2;
+      const delta = botTarget - center;
+      p2.y += Math.min(Math.abs(delta), diff.speed) * Math.sign(delta);
+      clampPaddle(p2);
+    }
+
+    // ── Paddle collision helper ───────────────────────────────────────────────
+    function checkPaddleHit(paddle, px, incomingVxSign) {
+      const ph = paddleH(paddle);
+      if (
+        Math.sign(ball.vx) === incomingVxSign &&
+        ball.x - BALL_SIZE / 2 <= px + PADDLE_W &&
+        ball.x + BALL_SIZE / 2 >= px &&
+        ball.y + BALL_SIZE / 2 >= paddle.y &&
+        ball.y - BALL_SIZE / 2 <= paddle.y + ph
+      ) {
+        ball.x = incomingVxSign < 0
+          ? px + PADDLE_W + BALL_SIZE / 2
+          : px - BALL_SIZE / 2;
+        const hitPos = (ball.y - (paddle.y + ph / 2)) / (ph / 2);
+        const angle = hitPos * 60 * (Math.PI / 180);
+        ball.speed = Math.min(ball.speed + 0.2, 9);
+        ball.vx = -incomingVxSign * ball.speed * Math.cos(angle);
+        ball.vy = ball.speed * Math.sin(angle);
+        sound.paddle();
+        return true;
+      }
+      return false;
+    }
+
+    // ── Update ────────────────────────────────────────────────────────────────
+    function update() {
+      if (state.mode !== 'playing' || state.paused || state.over) return;
+
+      const isCoop = state.gameMode === 'coop';
+
+      // Move p1
+      if (p1.up)   p1.y -= PADDLE_SPEED;
+      if (p1.down) p1.y += PADDLE_SPEED;
+      clampPaddle(p1);
+
+      // Move p2 / bot
+      if (state.gameMode === 'duo') {
+        if (p2.up)   p2.y -= PADDLE_SPEED;
+        if (p2.down) p2.y += PADDLE_SPEED;
+        clampPaddle(p2);
+      } else {
+        updateBot(); // solo or coop: p2 is always bot
+      }
+
+      // Move p3 (coop second player, right side same x as p1 but lower)
+      if (isCoop) {
+        if (p3.up)   p3.y -= PADDLE_SPEED;
+        if (p3.down) p3.y += PADDLE_SPEED;
+        clampPaddle(p3);
+      }
+
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+
+      // Walls
+      if (ball.y - BALL_SIZE / 2 <= 0) { ball.y = BALL_SIZE / 2; ball.vy *= -1; sound.wall(); }
+      if (ball.y + BALL_SIZE / 2 >= H) { ball.y = H - BALL_SIZE / 2; ball.vy *= -1; sound.wall(); }
+
+      const p1x  = 20;
+      const p2x  = W - 20 - PADDLE_W;
+
+      // Left side: p1 (and p3 in coop)
+      if (!checkPaddleHit(p1, p1x, -1) && isCoop) {
+        checkPaddleHit(p3, p1x, -1);
+      }
+
+      // Right side: p2
+      checkPaddleHit(p2, p2x, 1);
+
+      // Score
+      if (ball.x < 0) {
+        p2.score++;
+        ball.speed = 3;
+        const botWins = isCoop ? 'Bot' : (state.gameMode === 'solo' ? 'Bot' : '2');
+        if (p2.score >= WIN_SCORE) { state.over = true; state.winner = botWins; sound.win(); }
+        else { sound.score(); resetBall(1); }
+      }
+      if (ball.x > W) {
+        p1.score++;
+        ball.speed = 3;
+        const humanWins = isCoop ? 'Spieler-Team' : 'Spieler 1';
+        if (p1.score >= WIN_SCORE) { state.over = true; state.winner = humanWins; sound.win(); }
+        else { sound.score(); resetBall(-1); }
+      }
+    }
+
+    // ── Draw ──────────────────────────────────────────────────────────────────
+    function drawRect(x, y, w, h, color = '#fff') {
+      ctx.fillStyle = color; ctx.fillRect(x, y, w, h);
+    }
+
+    function drawText(text, x, y, size = 32, color = '#fff') {
+      ctx.fillStyle = color;
+      ctx.font = `${size}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(text, x, y);
+    }
+
+    const MENU_MODES = [
+      { label: '1 Spieler',     key: 'solo' },
+      { label: '2 Spieler',     key: 'duo'  },
+      { label: 'Co-Op vs Bot',  key: 'coop' },
+    ];
+
+    function drawMenu() {
+      drawRect(0, 0, W, H, '#000');
+      drawText('PONG', W / 2, 90, 64);
+
+      MENU_MODES.forEach((m, i) => {
+        const y = 175 + i * 65;
+        const active = state.gameMode === m.key;
+        ctx.strokeStyle = active ? '#fff' : '#555';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(W / 2 - 130, y - 28, 260, 44);
+        drawText(m.label, W / 2, y, 24, active ? '#fff' : '#666');
+      });
+
+      const showDiff = state.gameMode === 'solo' || state.gameMode === 'coop';
+      if (showDiff) {
+        drawText('Schwierigkeit:', W / 2, 380, 18, '#aaa');
+        ['leicht', 'mittel', 'schwer'].forEach((d, i) => {
+          const x = W / 2 - 160 + i * 160;
+          const active = difficulty === d;
+          ctx.strokeStyle = active ? '#fff' : '#444';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x - 60, 392, 120, 36);
+          drawText(d, x, 416, 18, active ? '#fff' : '#555');
+        });
+      }
+
+      drawText('Enter: Starten', W / 2, H - 40, 18, '#aaa');
+      drawText('↑/↓ Modus  |  ←/→ Schwierigkeit', W / 2, H - 18, 13, '#444');
+    }
+
+    function draw() {
+      if (state.mode === 'menu') { drawMenu(); return; }
+
+      drawRect(0, 0, W, H, '#000');
+
+      ctx.setLineDash([10, 15]);
+      ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Scores: left = human team, right = bot/opponent
+      const leftLabel  = state.gameMode === 'coop' ? 'TEAM' : 'S1';
+      const rightLabel = state.gameMode === 'duo'  ? 'S2'   : 'BOT';
+      drawText(p1.score, W / 4, 55, 48);
+      drawText(p2.score, (3 * W) / 4, 55, 48);
+      drawText(leftLabel,  W / 4,       80, 13, '#555');
+      drawText(rightLabel, (3 * W) / 4, 80, 13, '#555');
+
+      // Left paddle(s)
+      const p1x = 20;
+      drawRect(p1x, p1.y, PADDLE_W, paddleH(p1));
+      if (state.gameMode === 'coop') {
+        drawRect(p1x, p3.y, PADDLE_W, paddleH(p3), '#adf');
+      }
+
+      // Right paddle
+      drawRect(W - 20 - PADDLE_W, p2.y, PADDLE_W, PADDLE_H);
+
+      // Ball
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, BALL_SIZE / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (state.over) {
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(0, 0, W, H);
+        drawText(`${state.winner} gewinnt!`, W / 2, H / 2 - 20, 40);
+        drawText('Enter: Nochmal  |  Esc: Menü', W / 2, H / 2 + 30, 18, '#aaa');
+      } else if (state.paused) {
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0, 0, W, H);
+        drawText('PAUSE', W / 2, H / 2, 48);
+        drawText('Esc: Menü', W / 2, H / 2 + 50, 18, '#aaa');
+      }
+    }
+
+    function loop() { update(); draw(); requestAnimationFrame(loop); }
+
+    // ── Input ─────────────────────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+      if (state.mode === 'menu') {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+          const idx = MENU_MODES.findIndex(m => m.key === state.gameMode);
+          state.gameMode = MENU_MODES[(idx + (e.key === 'ArrowDown' ? 1 : -1) + MENU_MODES.length) % MENU_MODES.length].key;
+        }
+        const showDiff = state.gameMode === 'solo' || state.gameMode === 'coop';
+        if (showDiff && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+          const diffs = ['leicht', 'mittel', 'schwer'];
+          const idx = diffs.indexOf(difficulty);
+          difficulty = diffs[(idx + (e.key === 'ArrowRight' ? 1 : -1) + 3) % 3];
+        }
+        if (e.key === 'Enter') startGame();
+        e.preventDefault();
+        return;
+      }
+
+      if (e.key === 'Escape') { state.mode = 'menu'; infoEl.textContent = ''; return; }
+      if (e.key === 'Enter') {
+        if (state.over) startGame(); else state.paused = !state.paused;
+        return;
+      }
+
+      const isCoop = state.gameMode === 'coop';
+      if (e.key === 'w') { p1.up = true; e.preventDefault(); }
+      if (e.key === 's') { p1.down = true; e.preventDefault(); }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (isCoop)                        p3.up = true;
+        else if (state.gameMode === 'solo') p1.up = true;
+        else                               p2.up = true;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (isCoop)                        p3.down = true;
+        else if (state.gameMode === 'solo') p1.down = true;
+        else                               p2.down = true;
+      }
+    });
+
+    document.addEventListener('keyup', e => {
+      const isCoop = state.gameMode === 'coop';
+      if (e.key === 'w') p1.up = false;
+      if (e.key === 's') p1.down = false;
+      if (e.key === 'ArrowUp') {
+        if (isCoop)                         p3.up = false;
+        else if (state.gameMode === 'solo')  p1.up = false;
+        else                                p2.up = false;
+      }
+      if (e.key === 'ArrowDown') {
+        if (isCoop)                         p3.down = false;
+        else if (state.gameMode === 'solo')  p1.down = false;
+        else                                p2.down = false;
+      }
+    });
+
+    loop();
+  </script>
+</body>
+</html>
