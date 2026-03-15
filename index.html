@@ -172,6 +172,265 @@
       starBg:      '#ffffff',
     };
 
+    // ── Brawler draw functions ────────────────────────────────────────────────
+
+    function drawShelly(ctx, cx, cy, size) {
+      ctx.save();
+      const s = size;
+      // Background circle
+      ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2);
+      ctx.fillStyle = '#e8608a'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Face
+      ctx.beginPath(); ctx.arc(cx, cy + s * 0.05, s * 0.68, 0, Math.PI * 2);
+      ctx.fillStyle = '#f0c090'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Hair (top arc, brown)
+      ctx.beginPath(); ctx.arc(cx, cy - s * 0.1, s * 0.68, Math.PI, 0);
+      ctx.fillStyle = '#6b3a2a'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 1.5; ctx.stroke();
+      // Eyes
+      ctx.fillStyle = '#1a0a0a';
+      ctx.beginPath(); ctx.arc(cx - s * 0.22, cy, s * 0.09, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.22, cy, s * 0.09, 0, Math.PI * 2); ctx.fill();
+      // Pink cheeks
+      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = '#ff80a0';
+      ctx.beginPath(); ctx.arc(cx - s * 0.35, cy + s * 0.12, s * 0.16, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.35, cy + s * 0.12, s * 0.16, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      // Smile
+      ctx.beginPath();
+      ctx.arc(cx, cy + s * 0.15, s * 0.22, 0.15, Math.PI - 0.15);
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawColt(ctx, cx, cy, size) {
+      ctx.save();
+      const s = size;
+      // Background circle
+      ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2);
+      ctx.fillStyle = '#2255aa'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Sheriff hat (blue, wide brim)
+      ctx.fillStyle = '#2255aa';
+      ctx.beginPath();
+      ctx.rect(cx - s * 0.52, cy - s * 0.55, s * 1.04, s * 0.18); // brim
+      ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.beginPath();
+      ctx.rect(cx - s * 0.35, cy - s * 0.88, s * 0.7, s * 0.38); // crown
+      ctx.fillStyle = '#1a3e8a'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Hat band
+      ctx.fillStyle = '#f5c400';
+      ctx.fillRect(cx - s * 0.35, cy - s * 0.58, s * 0.7, s * 0.1);
+      // Face
+      ctx.beginPath(); ctx.arc(cx, cy + s * 0.1, s * 0.6, 0, Math.PI * 2);
+      ctx.fillStyle = '#f5d5a0'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Blonde hair sides
+      ctx.fillStyle = '#d4a800';
+      ctx.beginPath(); ctx.arc(cx - s * 0.52, cy + s * 0.05, s * 0.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.52, cy + s * 0.05, s * 0.2, 0, Math.PI * 2); ctx.fill();
+      // Determined eyes (angular)
+      ctx.fillStyle = '#1a0a0a';
+      ctx.beginPath(); ctx.arc(cx - s * 0.2, cy + s * 0.05, s * 0.09, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.2, cy + s * 0.05, s * 0.09, 0, Math.PI * 2); ctx.fill();
+      // Eyebrows (straight, determined)
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(cx - s * 0.31, cy - s * 0.1); ctx.lineTo(cx - s * 0.1, cy - s * 0.08); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + s * 0.31, cy - s * 0.1); ctx.lineTo(cx + s * 0.1, cy - s * 0.08); ctx.stroke();
+      // Mouth (thin line)
+      ctx.beginPath(); ctx.moveTo(cx - s * 0.15, cy + s * 0.25); ctx.lineTo(cx + s * 0.15, cy + s * 0.25);
+      ctx.lineWidth = 2; ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBull(ctx, cx, cy, size) {
+      ctx.save();
+      const s = size;
+      // Background circle
+      ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2);
+      ctx.fillStyle = '#cc3333'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Horns (dark, curved)
+      ctx.fillStyle = '#3a2010';
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.3, cy - s * 0.55);
+      ctx.bezierCurveTo(cx - s * 0.55, cy - s * 0.9, cx - s * 0.75, cy - s * 0.75, cx - s * 0.6, cy - s * 0.5);
+      ctx.bezierCurveTo(cx - s * 0.45, cy - s * 0.55, cx - s * 0.4, cy - s * 0.5, cx - s * 0.3, cy - s * 0.55);
+      ctx.fill(); ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + s * 0.3, cy - s * 0.55);
+      ctx.bezierCurveTo(cx + s * 0.55, cy - s * 0.9, cx + s * 0.75, cy - s * 0.75, cx + s * 0.6, cy - s * 0.5);
+      ctx.bezierCurveTo(cx + s * 0.45, cy - s * 0.55, cx + s * 0.4, cy - s * 0.5, cx + s * 0.3, cy - s * 0.55);
+      ctx.fill(); ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 1.5; ctx.stroke();
+      // Wide round face
+      ctx.beginPath(); ctx.arc(cx, cy + s * 0.05, s * 0.72, 0, Math.PI * 2);
+      ctx.fillStyle = '#cc3333'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Angry eyebrows
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(cx - s * 0.38, cy - s * 0.22); ctx.lineTo(cx - s * 0.12, cy - s * 0.1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + s * 0.38, cy - s * 0.22); ctx.lineTo(cx + s * 0.12, cy - s * 0.1); ctx.stroke();
+      // Eyes (small, mean)
+      ctx.fillStyle = '#1a0a0a';
+      ctx.beginPath(); ctx.arc(cx - s * 0.22, cy, s * 0.1, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.22, cy, s * 0.1, 0, Math.PI * 2); ctx.fill();
+      // Nose ring (silver circle)
+      ctx.beginPath(); ctx.arc(cx, cy + s * 0.28, s * 0.13, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fill();
+      ctx.strokeStyle = '#c0c0c0'; ctx.lineWidth = 3; ctx.stroke();
+      // Nostrils
+      ctx.fillStyle = '#882222';
+      ctx.beginPath(); ctx.arc(cx - s * 0.08, cy + s * 0.28, s * 0.06, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.08, cy + s * 0.28, s * 0.06, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    function drawSpike(ctx, cx, cy, size) {
+      ctx.save();
+      const s = size;
+      // Background circle
+      ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2);
+      ctx.fillStyle = '#4a9a3a'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Spikes (small triangles around the head)
+      ctx.fillStyle = '#3a7a2a';
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 1.5;
+      const spikeCount = 8;
+      const headR = s * 0.62;
+      for (let i = 0; i < spikeCount; i++) {
+        const angle = (Math.PI * 2 / spikeCount) * i - Math.PI / 2;
+        const tx = cx + Math.cos(angle) * (headR + s * 0.22);
+        const ty = cy + Math.sin(angle) * (headR + s * 0.22);
+        const l = cx + Math.cos(angle) * headR;
+        const r2 = cy + Math.sin(angle) * headR;
+        const perpX = Math.cos(angle + Math.PI / 2) * s * 0.1;
+        const perpY = Math.sin(angle + Math.PI / 2) * s * 0.1;
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(l + perpX, r2 + perpY);
+        ctx.lineTo(l - perpX, r2 - perpY);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      }
+      // Green head
+      ctx.beginPath(); ctx.arc(cx, cy, headR, 0, Math.PI * 2);
+      ctx.fillStyle = '#4a9a3a'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Dot eyes
+      ctx.fillStyle = '#1a0a0a';
+      ctx.beginPath(); ctx.arc(cx - s * 0.2, cy - s * 0.08, s * 0.1, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.2, cy - s * 0.08, s * 0.1, 0, Math.PI * 2); ctx.fill();
+      // Rosy cheeks
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = '#ff6080';
+      ctx.beginPath(); ctx.arc(cx - s * 0.32, cy + s * 0.12, s * 0.14, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.32, cy + s * 0.12, s * 0.14, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      // Smile
+      ctx.beginPath();
+      ctx.arc(cx, cy + s * 0.12, s * 0.18, 0.2, Math.PI - 0.2);
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBrock(ctx, cx, cy, size) {
+      ctx.save();
+      const s = size;
+      // Background circle
+      ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff6600'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Face (tall oval)
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + s * 0.05, s * 0.55, s * 0.65, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#fde8c8'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Spiky orange hair
+      ctx.fillStyle = '#ff6600';
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 1.5;
+      const spikes = [[-0.35, -0.7], [-0.15, -0.85], [0, -0.9], [0.15, -0.85], [0.35, -0.7]];
+      spikes.forEach(([ox, oy]) => {
+        ctx.beginPath();
+        ctx.moveTo(cx + ox * s, cy + oy * s);
+        ctx.lineTo(cx + (ox - 0.12) * s, cy + (oy + 0.25) * s);
+        ctx.lineTo(cx + (ox + 0.12) * s, cy + (oy + 0.25) * s);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      });
+      // Hair base (orange arc covering top)
+      ctx.beginPath();
+      ctx.arc(cx, cy - s * 0.15, s * 0.55, Math.PI, 0);
+      ctx.fillStyle = '#ff6600'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 1.5; ctx.stroke();
+      // Sunglasses (dark rect across eyes)
+      const glassY = cy - s * 0.1;
+      ctx.fillStyle = '#111';
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2;
+      // Left lens
+      ctx.beginPath();
+      ctx.rect(cx - s * 0.48, glassY - s * 0.13, s * 0.38, s * 0.24);
+      ctx.fill(); ctx.stroke();
+      // Right lens
+      ctx.beginPath();
+      ctx.rect(cx + s * 0.1, glassY - s * 0.13, s * 0.38, s * 0.24);
+      ctx.fill(); ctx.stroke();
+      // Bridge
+      ctx.beginPath(); ctx.moveTo(cx - s * 0.1, glassY); ctx.lineTo(cx + s * 0.1, glassY);
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 2.5; ctx.stroke();
+      // Shine on glasses
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(cx - s * 0.44, glassY - s * 0.11, s * 0.14, s * 0.09);
+      ctx.fillRect(cx + s * 0.14, glassY - s * 0.11, s * 0.14, s * 0.09);
+      ctx.globalAlpha = 1;
+      // Mouth (cool smirk)
+      ctx.beginPath();
+      ctx.arc(cx + s * 0.1, cy + s * 0.3, s * 0.18, Math.PI + 0.3, Math.PI * 2 - 0.1);
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.restore();
+    }
+
+    // ── Brawler selection data ────────────────────────────────────────────────
+    const CDN = 'https://cdn.brawlify.com/brawlers/borderless';
+    const BRAWLERS = [
+      { id: 'shelly', name: 'Shelly', color: '#e8608a', imgId: 16000000, fallback: drawShelly },
+      { id: 'colt',   name: 'Colt',   color: '#2255aa', imgId: 16000001, fallback: drawColt   },
+      { id: 'bull',   name: 'Bull',   color: '#cc3333', imgId: 16000002, fallback: drawBull   },
+      { id: 'brock',  name: 'Brock',  color: '#ff6600', imgId: 16000003, fallback: drawBrock  },
+      { id: 'spike',  name: 'Spike',  color: '#4a9a3a', imgId: 16000005, fallback: drawSpike  },
+    ];
+
+    // Preload all brawler images
+    BRAWLERS.forEach(b => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = `${CDN}/${b.imgId}.png`;
+      b.img = img;
+    });
+
+    // Draw brawler portrait — image if loaded, fallback to canvas drawing
+    function drawBrawlerPortrait(brawler, cx, cy, size) {
+      if (brawler.img?.complete && brawler.img.naturalWidth > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, size, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(brawler.img, cx - size, cy - size, size * 2, size * 2);
+        ctx.restore();
+      } else {
+        brawler.fallback(ctx, cx, cy, size);
+      }
+    }
+
+    let selectedBrawler = { p1: BRAWLERS[0], p2: BRAWLERS[1] };
+    let brawlerCursor = { p1: 0, p2: 1 };
+    let brawlerTurn = 'p1'; // 'p1' | 'p2' — whose turn it is to pick
+
     // ── Sound ─────────────────────────────────────────────────────────────────
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -215,7 +474,7 @@
     };
 
     // ── State ─────────────────────────────────────────────────────────────────
-    const state = { mode: 'menu', paused: false, over: false, winner: null, gameMode: 'solo' };
+    const state = { mode: 'menu', menuPage: 'mode', paused: false, over: false, winner: null, gameMode: 'solo' };
 
     const DIFFICULTIES = {
       leicht: { speed: 2.8, errorMargin: 55, predictionNoise: 3 },
@@ -464,6 +723,15 @@
     }
 
     function startGame() {
+      // Assign brawlers from selection; bot gets random brawler in solo/coop
+      selectedBrawler.p1 = BRAWLERS[brawlerCursor.p1];
+      if (state.gameMode === 'duo') {
+        selectedBrawler.p2 = BRAWLERS[brawlerCursor.p2];
+      } else {
+        const botOptions = BRAWLERS.filter(b => b.id !== selectedBrawler.p1.id);
+        selectedBrawler.p2 = botOptions[Math.floor(Math.random() * botOptions.length)];
+      }
+
       p1.score = 0; p2.score = 0;
       if (state.gameMode === 'coop') {
         p1.y = H / 2 - COOP_PADDLE_H - 5;
@@ -948,6 +1216,8 @@
     ];
 
     function drawMenu() {
+      if (state.menuPage === 'brawlers') { drawBrawlerSelect(); return; }
+
       drawBackground();
 
       // Title
@@ -988,8 +1258,65 @@
         });
       }
 
-      drawOutlinedText('ENTER: START  •  ↑/↓: MODUS  •  ←/→: SCHWIERIGKEIT',
+      drawOutlinedText('ENTER: WEITER  •  ↑/↓: MODUS  •  ←/→: SCHWIERIGKEIT',
         W/2, H - 14, 13, C.textGray, 'transparent');
+    }
+
+    function drawBrawlerSelect() {
+      drawBackground();
+      ctx.fillStyle = 'rgba(10,5,25,0.55)';
+      ctx.fillRect(0, 0, W, H);
+
+      const isDuo = state.gameMode === 'duo';
+      const activeTurn  = brawlerTurn;
+      const activeCursor = activeTurn === 'p1' ? brawlerCursor.p1 : brawlerCursor.p2;
+      const activeColor  = activeTurn === 'p1' ? C.accent : C.paddle2;
+      const activeLabel  = activeTurn === 'p1' ? 'SPIELER 1' : 'SPIELER 2';
+
+      // Title shows whose turn it is
+      drawOutlinedText(`${activeLabel}: WÄHLE DEINEN BRAWLER`, W/2, 42, 24, activeColor, '#000', 4);
+
+      // Cards — always ←/→ for active player, centered
+      const cardW = 110, cardH = 130, cardSpacing = 120;
+      const totalW = BRAWLERS.length * cardSpacing - (cardSpacing - cardW);
+      const startX = W / 2 - totalW / 2 + cardW / 2;
+
+      BRAWLERS.forEach((brawler, i) => {
+        const cardX = startX + i * cardSpacing;
+        const cardY = 72;
+        const isSelected = i === activeCursor;
+
+        const cardFill   = isSelected ? `rgba(${activeColor === C.accent ? '245,196,0' : '232,64,64'},0.2)` : 'rgba(30,15,70,0.75)';
+        const cardBorder = isSelected ? activeColor : '#4a2d8a';
+        if (isSelected) { ctx.shadowColor = activeColor; ctx.shadowBlur = 16; }
+        drawRoundedRect(cardX - cardW/2, cardY, cardW, cardH, 12, cardFill, cardBorder, isSelected ? 3 : 1.5);
+        ctx.shadowBlur = 0;
+
+        drawBrawlerPortrait(brawler, cardX, cardY + 58, 40);
+        drawOutlinedText(brawler.name, cardX, cardY + cardH - 10, 14,
+          isSelected ? activeColor : C.textGray, 'transparent');
+
+        if (isSelected) drawOutlinedText('▼', cardX, cardY - 8, 16, activeColor, '#000', 2);
+      });
+
+      // If duo: show already-confirmed P1 brawler as small portrait top-left
+      if (isDuo && activeTurn === 'p2') {
+        const confirmed = BRAWLERS[brawlerCursor.p1];
+        drawOutlinedText('S1:', 46, 90, 13, C.accent, 'transparent');
+        ctx.save();
+        ctx.beginPath(); ctx.arc(80, 94, 22, 0, Math.PI * 2);
+        ctx.strokeStyle = C.accent; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+        drawBrawlerPortrait(confirmed, 80, 94, 20);
+        drawOutlinedText(confirmed.name, 80, 122, 11, C.accent, 'transparent');
+      }
+
+      // Hint
+      const hint = isDuo && activeTurn === 'p1'
+        ? '←/→: Brawler  •  ENTER: Bestätigen  •  ESC: Zurück'
+        : isDuo
+        ? '←/→: Brawler  •  ENTER: Spielen  •  ESC: Zurück zu S1'
+        : '←/→: Brawler  •  ENTER: Spielen  •  ESC: Zurück';
+      drawOutlinedText(hint, W/2, H - 14, 13, C.textGray, 'transparent');
     }
 
     // ── Draw game ─────────────────────────────────────────────────────────────
@@ -1008,6 +1335,21 @@
       drawOutlinedText(String(p2.score), 3*W/4,     62, 52, '#ffffff', '#000', 5);
       drawOutlinedText(leftLabel,  W/4,       84, 13, C.textGray, 'transparent');
       drawOutlinedText(rightLabel, 3*W/4,     84, 13, C.textGray, 'transparent');
+
+      // Brawler avatars beside scores
+      const av1x = W/4 - 52, av1y = 52;
+      ctx.beginPath(); ctx.arc(av1x, av1y, 28, 0, Math.PI * 2);
+      ctx.fillStyle = '#1b1035'; ctx.fill();
+      drawBrawlerPortrait(selectedBrawler.p1, av1x, av1y, 26);
+      ctx.beginPath(); ctx.arc(av1x, av1y, 28, 0, Math.PI * 2);
+      ctx.strokeStyle = selectedBrawler.p1.color; ctx.lineWidth = 2.5; ctx.stroke();
+
+      const av2x = 3*W/4 + 52, av2y = 52;
+      ctx.beginPath(); ctx.arc(av2x, av2y, 28, 0, Math.PI * 2);
+      ctx.fillStyle = '#1b1035'; ctx.fill();
+      drawBrawlerPortrait(selectedBrawler.p2, av2x, av2y, 26);
+      ctx.beginPath(); ctx.arc(av2x, av2y, 28, 0, Math.PI * 2);
+      ctx.strokeStyle = selectedBrawler.p2.color; ctx.lineWidth = 2.5; ctx.stroke();
 
       // Paddles
       const p1x = 20;
@@ -1220,6 +1562,41 @@
     // ── Input ─────────────────────────────────────────────────────────────────
     document.addEventListener('keydown', e => {
       if (state.mode === 'menu') {
+        if (state.menuPage === 'brawlers') {
+          const isDuo = state.gameMode === 'duo';
+          const cur = brawlerTurn === 'p1' ? 'p1' : 'p2';
+
+          if (e.key === 'ArrowLeft') {
+            brawlerCursor[cur] = (brawlerCursor[cur] - 1 + BRAWLERS.length) % BRAWLERS.length;
+          }
+          if (e.key === 'ArrowRight') {
+            brawlerCursor[cur] = (brawlerCursor[cur] + 1) % BRAWLERS.length;
+          }
+          if (e.key === 'Enter') {
+            if (isDuo && brawlerTurn === 'p1') {
+              // P1 confirmed — now P2 picks
+              brawlerTurn = 'p2';
+              // Make sure P2 cursor doesn't overlap P1
+              if (brawlerCursor.p2 === brawlerCursor.p1) {
+                brawlerCursor.p2 = (brawlerCursor.p1 + 1) % BRAWLERS.length;
+              }
+            } else {
+              startGame();
+            }
+          }
+          if (e.key === 'Escape') {
+            if (isDuo && brawlerTurn === 'p2') {
+              brawlerTurn = 'p1'; // back to P1 selection
+            } else {
+              state.menuPage = 'mode';
+              brawlerTurn = 'p1';
+            }
+          }
+          e.preventDefault();
+          return;
+        }
+
+        // Mode selection page
         if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
           const idx = MENU_MODES.findIndex(m => m.key === state.gameMode);
           state.gameMode = MENU_MODES[(idx + (e.key === 'ArrowDown' ? 1 : -1) + MENU_MODES.length) % MENU_MODES.length].key;
@@ -1230,12 +1607,12 @@
           const idx = diffs.indexOf(difficulty);
           difficulty = diffs[(idx + (e.key === 'ArrowRight' ? 1 : -1) + 3) % 3];
         }
-        if (e.key === 'Enter') startGame();
+        if (e.key === 'Enter') state.menuPage = 'brawlers';
         e.preventDefault();
         return;
       }
 
-      if (e.key === 'Escape') { state.mode = 'menu'; infoEl.textContent = ''; return; }
+      if (e.key === 'Escape') { state.mode = 'menu'; state.menuPage = 'mode'; brawlerTurn = 'p1'; infoEl.textContent = ''; return; }
       if (e.key === 'Enter') {
         if (state.over) startGame(); else state.paused = !state.paused;
         return;
