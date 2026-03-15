@@ -250,6 +250,133 @@
     // Floating +1 popup texts
     const popups = [];
 
+    // ── Power-ups (Schild) ────────────────────────────────────────────────────
+    const SHIELD_TYPE = { id: 'shield', label: '🛡 SCHILD', color: '#a78bfa', duration: 10 };
+
+    const powerUps = [];   // power-up items floating on field
+    const effects  = { p1: null, p2: null };  // { type, timeLeft }
+
+    function spawnPowerUp(x, y) {
+      powerUps.push({ x, y, type: SHIELD_TYPE, pulse: 0 });
+    }
+
+    function applyEffect(side, type) {
+      effects[side] = { type, timeLeft: type.duration };
+      popups.push({
+        x: side === 'p1' ? W / 4 : 3 * W / 4,
+        y: H / 2 - 40,
+        life: 1.8,
+        color: type.color,
+        label: '🛡 SCHILD AKTIV!',
+      });
+    }
+
+    function clearEffects() { effects.p1 = null; effects.p2 = null; }
+
+    // Shield wall x positions
+    const SHIELD_X = { p1: 6, p2: W - 6 };
+
+    // Called each frame: bounce ball off shield wall if active
+    function checkShieldCollisions() {
+      if (effects.p1?.type.id === 'shield' && ball.vx < 0 && ball.x - BALL_SIZE / 2 <= SHIELD_X.p1) {
+        ball.x = SHIELD_X.p1 + BALL_SIZE / 2;
+        ball.vx = Math.abs(ball.vx);
+        spawnParticles(SHIELD_X.p1, ball.y, '#a78bfa', 10, true);
+        shockwaves.push({ x: SHIELD_X.p1, y: ball.y, r: 10, life: 1, color: '#a78bfa', maxR: 100 });
+        sound.paddle();
+      }
+      if (effects.p2?.type.id === 'shield' && ball.vx > 0 && ball.x + BALL_SIZE / 2 >= SHIELD_X.p2) {
+        ball.x = SHIELD_X.p2 - BALL_SIZE / 2;
+        ball.vx = -Math.abs(ball.vx);
+        spawnParticles(SHIELD_X.p2, ball.y, '#a78bfa', 10, true);
+        shockwaves.push({ x: SHIELD_X.p2, y: ball.y, r: 10, life: 1, color: '#a78bfa', maxR: 100 });
+        sound.paddle();
+      }
+    }
+
+    function effectiveSpeed(base, side) { return base; }
+    function effectivePaddleH(paddle, side) { return paddleH(paddle); }
+
+    // ── Obstacles (crates) ────────────────────────────────────────────────────
+    const CRATE_DEFS = [
+      { cx: W/2 - 140, cy: H/2,    size: 30, maxHp: 3 },
+      { cx: W/2 + 140, cy: H/2,    size: 30, maxHp: 3 },
+      { cx: W/2,       cy: 60,     size: 26, maxHp: 2 },
+      { cx: W/2,       cy: H - 60, size: 26, maxHp: 2 },
+    ];
+
+    let obstacles = [];
+
+    function initObstacles() {
+      obstacles = CRATE_DEFS.map(d => ({
+        ...d,
+        hp: d.maxHp,
+        dead: false,
+        hitLife: 0,   // flash timer on hit
+      }));
+    }
+
+    // Debris particles when a crate is destroyed
+    function spawnDebris(cx, cy, size) {
+      for (let i = 0; i < 18; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 5;
+        particles.push({
+          x: cx + (Math.random() - 0.5) * size,
+          y: cy + (Math.random() - 0.5) * size,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1, color: i % 3 === 0 ? '#c8903a' : (i % 3 === 1 ? '#8B5E3C' : '#f5c400'),
+          size: 3 + Math.random() * 5,
+          star: i % 4 === 0,
+          rot: Math.random() * Math.PI * 2,
+          rotV: (Math.random() - 0.5) * 0.4,
+        });
+      }
+      shockwaves.push({ x: cx, y: cy, r: 10, life: 1, color: '#c8903a', maxR: 80 });
+    }
+
+    function checkObstacleCollisions() {
+      for (const obs of obstacles) {
+        if (obs.dead) continue;
+        const half = obs.size / 2;
+        const bx = ball.x, by = ball.y, br = BALL_SIZE / 2;
+        const left = obs.cx - half, right = obs.cx + half;
+        const top  = obs.cy - half, bottom = obs.cy + half;
+
+        if (bx + br < left || bx - br > right || by + br < top || by - br > bottom) continue;
+
+        // Determine which side was hit
+        const overlapL = (bx + br) - left;
+        const overlapR = right - (bx - br);
+        const overlapT = (by + br) - top;
+        const overlapB = bottom - (by - br);
+        const minH = Math.min(overlapL, overlapR);
+        const minV = Math.min(overlapT, overlapB);
+
+        if (minH < minV) {
+          ball.vx *= -1;
+          ball.x += overlapL < overlapR ? -(overlapL + 1) : (overlapR + 1);
+        } else {
+          ball.vy *= -1;
+          ball.y += overlapT < overlapB ? -(overlapT + 1) : (overlapB + 1);
+        }
+
+        obs.hp--;
+        obs.hitLife = 1;
+        spawnParticles(ball.x, ball.y, '#c8903a', 6);
+        sound.paddle();
+
+        if (obs.hp <= 0) {
+          obs.dead = true;
+          spawnDebris(obs.cx, obs.cy, obs.size);
+          shake = { x: 0, y: 0, life: 0.6 };
+          spawnPowerUp(obs.cx, obs.cy);
+        }
+        break; // one collision per frame
+      }
+    }
+
     function spawnParticles(x, y, color, count = 8, star = false) {
       for (let i = 0; i < count; i++) {
         const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
@@ -351,8 +478,11 @@
       trail.length = 0;
       shockwaves.length = 0;
       popups.length = 0;
+      powerUps.length = 0;
+      clearEffects();
       shake.life = 0; shake.x = 0; shake.y = 0;
       scoreFlash.active = false;
+      initObstacles();
       state.over = false; state.winner = null; state.paused = false;
       state.mode = 'playing';
       resetBall(Math.random() < 0.5 ? 1 : -1);
@@ -401,8 +531,8 @@
     }
 
     // ── Paddle collision ──────────────────────────────────────────────────────
-    function checkPaddleHit(paddle, px, incomingVxSign, particleColor) {
-      const ph = paddleH(paddle);
+    function checkPaddleHit(paddle, px, incomingVxSign, particleColor, side) {
+      const ph = side ? effectivePaddleH(paddle, side) : paddleH(paddle);
       if (
         Math.sign(ball.vx) === incomingVxSign &&
         ball.x - BALL_SIZE / 2 <= px + PADDLE_W &&
@@ -431,21 +561,23 @@
 
       const isCoop = state.gameMode === 'coop';
 
-      if (p1.up)   p1.y -= PADDLE_SPEED;
-      if (p1.down) p1.y += PADDLE_SPEED;
+      const sp1 = effectiveSpeed(PADDLE_SPEED, 'p1');
+      const sp2 = effectiveSpeed(PADDLE_SPEED, 'p2');
+      if (p1.up)   p1.y -= sp1;
+      if (p1.down) p1.y += sp1;
       clampPaddle(p1);
 
       if (state.gameMode === 'duo') {
-        if (p2.up)   p2.y -= PADDLE_SPEED;
-        if (p2.down) p2.y += PADDLE_SPEED;
+        if (p2.up)   p2.y -= sp2;
+        if (p2.down) p2.y += sp2;
         clampPaddle(p2);
       } else {
         updateBot();
       }
 
       if (isCoop) {
-        if (p3.up)   p3.y -= PADDLE_SPEED;
-        if (p3.down) p3.y += PADDLE_SPEED;
+        if (p3.up)   p3.y -= sp1;
+        if (p3.down) p3.y += sp1;
         clampPaddle(p3);
       }
 
@@ -496,13 +628,46 @@
         sound.wall();
       }
 
+      checkShieldCollisions();
+      checkObstacleCollisions();
+
+      // Update obstacle hit flash
+      for (const obs of obstacles) {
+        if (obs.hitLife > 0) obs.hitLife -= 0.1;
+      }
+
+      // Power-up: animate + ball collision
+      for (let i = powerUps.length - 1; i >= 0; i--) {
+        const pu = powerUps[i];
+        pu.pulse = (pu.pulse + 0.08) % (Math.PI * 2);
+
+        const dist = Math.hypot(ball.x - pu.x, ball.y - pu.y);
+        if (dist < BALL_SIZE / 2 + 16) {
+          // Which player hit it? The one whose side the ball came FROM
+          const side = ball.vx > 0 ? 'p1' : 'p2';
+          applyEffect(side, pu.type);
+          spawnParticles(pu.x, pu.y, pu.type.color, 14, true);
+          shockwaves.push({ x: pu.x, y: pu.y, r: 10, life: 1, color: pu.type.color, maxR: 80 });
+          powerUps.splice(i, 1);
+        }
+      }
+
+      // Tick active effects
+      const dt = 1 / 60;
+      for (const side of ['p1', 'p2']) {
+        if (effects[side]) {
+          effects[side].timeLeft -= dt;
+          if (effects[side].timeLeft <= 0) effects[side] = null;
+        }
+      }
+
       const p1x = 20;
       const p2x = W - 20 - PADDLE_W;
 
-      if (!checkPaddleHit(p1, p1x, -1, C.accent) && isCoop) {
-        checkPaddleHit(p3, p1x, -1, C.coopP3);
+      if (!checkPaddleHit(p1, p1x, -1, C.accent, 'p1') && isCoop) {
+        checkPaddleHit(p3, p1x, -1, C.coopP3, 'p1');
       }
-      checkPaddleHit(p2, p2x, 1, C.paddle2);
+      checkPaddleHit(p2, p2x, 1, C.paddle2, 'p2');
 
       // Update particles
       for (let i = particles.length - 1; i >= 0; i--) {
@@ -521,7 +686,7 @@
         spawnGoalEffect(20, ball.y, '#ff6060', 3*W/4);
         const botWins = state.gameMode === 'duo' ? 'Spieler 2' : 'Bot';
         if (p2.score >= WIN_SCORE) { state.over = true; state.winner = botWins; sound.win(); spawnWinParticles(); }
-        else { sound.score(); resetBall(1); }
+        else { sound.score(); resetBall(1); initObstacles(); powerUps.length = 0; clearEffects(); }
       }
       if (ball.x > W) {
         p1.score++;
@@ -531,7 +696,7 @@
         spawnGoalEffect(W - 20, ball.y, C.accent, W/4);
         const humanWins = state.gameMode === 'coop' ? 'Spieler-Team' : 'Spieler 1';
         if (p1.score >= WIN_SCORE) { state.over = true; state.winner = humanWins; sound.win(); spawnWinParticles(); }
-        else { sound.score(); resetBall(-1); }
+        else { sound.score(); resetBall(-1); initObstacles(); powerUps.length = 0; clearEffects(); }
       }
     }
 
@@ -717,13 +882,7 @@
       drawBush(W - 52, H / 2, 16);
       ctx.globalAlpha = 1;
 
-      // ── Crates (symmetric, mid-field) ───────────────────────────────────────
-      ctx.globalAlpha = 0.75;
-      drawCrate(W/2 - 140, H/2, 30);
-      drawCrate(W/2 + 140, H/2, 30);
-      drawCrate(W/2, 60, 26);
-      drawCrate(W/2, H - 60, 26);
-      ctx.globalAlpha = 1;
+      // ── Crates drawn dynamically in draw() ──────────────────────────────────
 
       // ── Center circle (gem grab) ─────────────────────────────────────────────
       ctx.beginPath();
@@ -862,6 +1021,28 @@
       }
       drawPaddle(p2x, p2.y, PADDLE_H, C.paddle2, C.paddle2Dark);
 
+      // Obstacles
+      for (const obs of obstacles) {
+        if (obs.dead) continue;
+        const flash = obs.hitLife > 0;
+        ctx.globalAlpha = flash ? 1 : 0.9;
+        if (flash) { ctx.shadowColor = '#fff'; ctx.shadowBlur = 20 * obs.hitLife; }
+        drawCrate(obs.cx, obs.cy, obs.size);
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+
+        // HP bar above crate
+        const barW = obs.size;
+        const bx = obs.cx - barW / 2;
+        const by = obs.cy - obs.size / 2 - 10;
+        ctx.fillStyle = '#333';
+        ctx.fillRect(bx, by, barW, 5);
+        ctx.fillStyle = obs.hp === obs.maxHp ? '#4caf50' : obs.hp === 1 ? '#f44336' : '#ff9800';
+        ctx.fillRect(bx, by, barW * (obs.hp / obs.maxHp), 5);
+        ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+        ctx.strokeRect(bx, by, barW, 5);
+      }
+
       // Ball trail
       trail.forEach((t, i) => {
         const alpha = (i / TRAIL_LEN) * 0.45;
@@ -928,11 +1109,81 @@
       });
       ctx.globalAlpha = 1;
 
-      // +1 popups
+      // Power-up items on field
+      powerUps.forEach(pu => {
+        const bob = Math.sin(pu.pulse) * 4;
+        const r = 16 + Math.sin(pu.pulse * 1.5) * 2;
+        // Glow
+        ctx.shadowColor = pu.type.color;
+        ctx.shadowBlur = 18;
+        // Background circle
+        ctx.beginPath();
+        ctx.arc(pu.x, pu.y + bob, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#1b1035';
+        ctx.fill();
+        ctx.strokeStyle = pu.type.color;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        // Icon text
+        drawOutlinedText(pu.type.label, pu.x, pu.y + bob + 5, 11, pu.type.color, '#000', 2);
+      });
+
+      // Shield walls + timer
+      [{ side: 'p1', wallX: SHIELD_X.p1, timerX: 20 + PADDLE_W + 4 }, { side: 'p2', wallX: SHIELD_X.p2, timerX: W - 20 - PADDLE_W - 10 }].forEach(({ side, wallX, timerX }) => {
+        const eff = effects[side];
+        if (!eff) return;
+        const progress = eff.timeLeft / eff.type.duration;
+        const pulse = 0.55 + 0.45 * Math.sin(Date.now() / 120);
+
+        // Full-height glowing wall
+        const wallW = 6;
+        const wx = side === 'p1' ? wallX : wallX - wallW;
+        const grad = ctx.createLinearGradient(wx, 0, wx + wallW, 0);
+        grad.addColorStop(0, `rgba(167,139,250,0)`);
+        grad.addColorStop(side === 'p1' ? 0.6 : 0.4, `rgba(167,139,250,${0.85 * pulse})`);
+        grad.addColorStop(1, `rgba(167,139,250,0)`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(wx, 0, wallW, H);
+
+        // Outer glow columns
+        ctx.shadowColor = '#a78bfa';
+        ctx.shadowBlur = 22 * pulse;
+        ctx.fillStyle = `rgba(167,139,250,${0.3 * pulse})`;
+        ctx.fillRect(wx, 0, wallW, H);
+        ctx.shadowBlur = 0;
+
+        // Hex segments along the wall (energy field look)
+        for (let sy = 10; sy < H; sy += 28) {
+          ctx.globalAlpha = pulse * 0.6;
+          ctx.fillStyle = '#c4b5fd';
+          ctx.fillRect(wx + 1, sy, wallW - 2, 14);
+        }
+        ctx.globalAlpha = 1;
+
+        // Timer bar next to paddle
+        const ph = paddleH(side === 'p1' ? p1 : p2);
+        const py = side === 'p1' ? p1.y : p2.y;
+        ctx.fillStyle = '#1b1035';
+        ctx.fillRect(timerX, py, 6, ph);
+        ctx.fillStyle = '#a78bfa';
+        ctx.fillRect(timerX, py + ph * (1 - progress), 6, ph * progress);
+        ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+        ctx.strokeRect(timerX, py, 6, ph);
+
+        // Paddle glow
+        ctx.shadowColor = '#a78bfa';
+        ctx.shadowBlur = 18;
+        const px2 = side === 'p1' ? 20 : W - 20 - PADDLE_W;
+        drawPaddle(px2, py, ph, side === 'p1' ? C.paddle1 : C.paddle2, side === 'p1' ? C.paddle1Dark : C.paddle2Dark);
+        ctx.shadowBlur = 0;
+      });
+
+      // Popups (+1 and power-up labels)
       popups.forEach(p => {
-        const alpha = Math.min(p.life * 2, 1);
+        const alpha = Math.min(p.life * 1.5, 1);
         ctx.globalAlpha = alpha;
-        drawOutlinedText('+1', p.x, p.y, 42, p.color, '#000', 5);
+        drawOutlinedText(p.label || '+1', p.x, p.y, p.label ? 20 : 42, p.color, '#000', p.label ? 3 : 5);
       });
       ctx.globalAlpha = 1;
 
