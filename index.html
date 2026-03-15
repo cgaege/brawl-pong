@@ -427,9 +427,9 @@
       }
     }
 
-    let selectedBrawler = { p1: BRAWLERS[0], p2: BRAWLERS[1] };
-    let brawlerCursor = { p1: 0, p2: 1 };
-    let brawlerTurn = 'p1'; // 'p1' | 'p2' — whose turn it is to pick
+    let selectedBrawler = { p1: BRAWLERS[0], p2: BRAWLERS[1], p3: BRAWLERS[2] };
+    let brawlerCursor = { p1: 0, p2: 1, p3: 2 };
+    let brawlerTurn = 'p1'; // 'p1' | 'p2' | 'p3' — whose turn it is to pick
 
     // ── Sound ─────────────────────────────────────────────────────────────────
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -727,6 +727,10 @@
       selectedBrawler.p1 = BRAWLERS[brawlerCursor.p1];
       if (state.gameMode === 'duo') {
         selectedBrawler.p2 = BRAWLERS[brawlerCursor.p2];
+      } else if (state.gameMode === 'coop') {
+        selectedBrawler.p3 = BRAWLERS[brawlerCursor.p3];
+        const botOptions = BRAWLERS.filter(b => b.id !== selectedBrawler.p1.id && b.id !== selectedBrawler.p3.id);
+        selectedBrawler.p2 = botOptions[Math.floor(Math.random() * botOptions.length)];
       } else {
         const botOptions = BRAWLERS.filter(b => b.id !== selectedBrawler.p1.id);
         selectedBrawler.p2 = botOptions[Math.floor(Math.random() * botOptions.length)];
@@ -1267,11 +1271,12 @@
       ctx.fillStyle = 'rgba(10,5,25,0.55)';
       ctx.fillRect(0, 0, W, H);
 
-      const isDuo = state.gameMode === 'duo';
-      const activeTurn  = brawlerTurn;
-      const activeCursor = activeTurn === 'p1' ? brawlerCursor.p1 : brawlerCursor.p2;
-      const activeColor  = activeTurn === 'p1' ? C.accent : C.paddle2;
-      const activeLabel  = activeTurn === 'p1' ? 'SPIELER 1' : 'SPIELER 2';
+      const isDuo  = state.gameMode === 'duo';
+      const isCoop = state.gameMode === 'coop';
+      const activeTurn   = brawlerTurn;
+      const activeCursor = brawlerCursor[activeTurn];
+      const activeColor  = activeTurn === 'p1' ? C.accent : activeTurn === 'p3' ? C.coopP3 : C.paddle2;
+      const activeLabel  = activeTurn === 'p1' ? 'SPIELER 1' : activeTurn === 'p3' ? 'SPIELER 2 (Co-Op)' : 'SPIELER 2';
 
       // Title shows whose turn it is
       drawOutlinedText(`${activeLabel}: WÄHLE DEINEN BRAWLER`, W/2, 42, 24, activeColor, '#000', 4);
@@ -1299,23 +1304,24 @@
         if (isSelected) drawOutlinedText('▼', cardX, cardY - 8, 16, activeColor, '#000', 2);
       });
 
-      // If duo: show already-confirmed P1 brawler as small portrait top-left
-      if (isDuo && activeTurn === 'p2') {
+      // Show confirmed P1 portrait top-left when it's the second player's turn
+      if ((isDuo || isCoop) && activeTurn !== 'p1') {
         const confirmed = BRAWLERS[brawlerCursor.p1];
-        drawOutlinedText('S1:', 46, 90, 13, C.accent, 'transparent');
+        drawOutlinedText('S1:', 46, 82, 13, C.accent, 'transparent');
         ctx.save();
-        ctx.beginPath(); ctx.arc(80, 94, 22, 0, Math.PI * 2);
-        ctx.strokeStyle = C.accent; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
-        drawBrawlerPortrait(confirmed, 80, 94, 20);
-        drawOutlinedText(confirmed.name, 80, 122, 11, C.accent, 'transparent');
+        ctx.beginPath(); ctx.arc(80, 92, 22, 0, Math.PI * 2);
+        ctx.fillStyle = '#1b1035'; ctx.fill();
+        ctx.strokeStyle = C.accent; ctx.lineWidth = 2; ctx.stroke();
+        ctx.restore();
+        drawBrawlerPortrait(confirmed, 80, 92, 20);
+        drawOutlinedText(confirmed.name, 80, 120, 11, C.accent, 'transparent');
       }
 
       // Hint
-      const hint = isDuo && activeTurn === 'p1'
+      const isFirstTurn = activeTurn === 'p1';
+      const hint = isFirstTurn
         ? '←/→: Brawler  •  ENTER: Bestätigen  •  ESC: Zurück'
-        : isDuo
-        ? '←/→: Brawler  •  ENTER: Spielen  •  ESC: Zurück zu S1'
-        : '←/→: Brawler  •  ENTER: Spielen  •  ESC: Zurück';
+        : '←/→: Brawler  •  ENTER: Spielen  •  ESC: Zurück zu S1';
       drawOutlinedText(hint, W/2, H - 14, 13, C.textGray, 'transparent');
     }
 
@@ -1336,20 +1342,25 @@
       drawOutlinedText(leftLabel,  W/4,       84, 13, C.textGray, 'transparent');
       drawOutlinedText(rightLabel, 3*W/4,     84, 13, C.textGray, 'transparent');
 
-      // Brawler avatars beside scores
-      const av1x = W/4 - 52, av1y = 52;
-      ctx.beginPath(); ctx.arc(av1x, av1y, 28, 0, Math.PI * 2);
-      ctx.fillStyle = '#1b1035'; ctx.fill();
-      drawBrawlerPortrait(selectedBrawler.p1, av1x, av1y, 26);
-      ctx.beginPath(); ctx.arc(av1x, av1y, 28, 0, Math.PI * 2);
-      ctx.strokeStyle = selectedBrawler.p1.color; ctx.lineWidth = 2.5; ctx.stroke();
+      // Brawler avatars
+      function drawAvatar(brawler, cx, cy, r) {
+        ctx.beginPath(); ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#1b1035'; ctx.fill();
+        drawBrawlerPortrait(brawler, cx, cy, r);
+        ctx.beginPath(); ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+        ctx.strokeStyle = brawler.color; ctx.lineWidth = 2.5; ctx.stroke();
+      }
 
-      const av2x = 3*W/4 + 52, av2y = 52;
-      ctx.beginPath(); ctx.arc(av2x, av2y, 28, 0, Math.PI * 2);
-      ctx.fillStyle = '#1b1035'; ctx.fill();
-      drawBrawlerPortrait(selectedBrawler.p2, av2x, av2y, 26);
-      ctx.beginPath(); ctx.arc(av2x, av2y, 28, 0, Math.PI * 2);
-      ctx.strokeStyle = selectedBrawler.p2.color; ctx.lineWidth = 2.5; ctx.stroke();
+      if (state.gameMode === 'coop') {
+        // Two team avatars left of score, side by side
+        drawAvatar(selectedBrawler.p1, W/4 - 62, 52, 22);
+        drawAvatar(selectedBrawler.p3, W/4 - 30, 52, 22);
+        // Small "+" between them
+        drawOutlinedText('+', W/4 - 46, 78, 10, C.textGray, 'transparent');
+      } else {
+        drawAvatar(selectedBrawler.p1, W/4 - 52, 52, 26);
+      }
+      drawAvatar(selectedBrawler.p2, 3*W/4 + 52, 52, 26);
 
       // Paddles
       const p1x = 20;
@@ -1563,30 +1574,31 @@
     document.addEventListener('keydown', e => {
       if (state.mode === 'menu') {
         if (state.menuPage === 'brawlers') {
-          const isDuo = state.gameMode === 'duo';
-          const cur = brawlerTurn === 'p1' ? 'p1' : 'p2';
+          const isDuo  = state.gameMode === 'duo';
+          const isCoop = state.gameMode === 'coop';
+          const needsTwoSelections = isDuo || isCoop;
+          const secondSlot = isCoop ? 'p3' : 'p2';
 
           if (e.key === 'ArrowLeft') {
-            brawlerCursor[cur] = (brawlerCursor[cur] - 1 + BRAWLERS.length) % BRAWLERS.length;
+            brawlerCursor[brawlerTurn] = (brawlerCursor[brawlerTurn] - 1 + BRAWLERS.length) % BRAWLERS.length;
           }
           if (e.key === 'ArrowRight') {
-            brawlerCursor[cur] = (brawlerCursor[cur] + 1) % BRAWLERS.length;
+            brawlerCursor[brawlerTurn] = (brawlerCursor[brawlerTurn] + 1) % BRAWLERS.length;
           }
           if (e.key === 'Enter') {
-            if (isDuo && brawlerTurn === 'p1') {
-              // P1 confirmed — now P2 picks
-              brawlerTurn = 'p2';
-              // Make sure P2 cursor doesn't overlap P1
-              if (brawlerCursor.p2 === brawlerCursor.p1) {
-                brawlerCursor.p2 = (brawlerCursor.p1 + 1) % BRAWLERS.length;
+            if (needsTwoSelections && brawlerTurn === 'p1') {
+              brawlerTurn = secondSlot;
+              // Avoid same brawler as P1
+              if (brawlerCursor[secondSlot] === brawlerCursor.p1) {
+                brawlerCursor[secondSlot] = (brawlerCursor.p1 + 1) % BRAWLERS.length;
               }
             } else {
               startGame();
             }
           }
           if (e.key === 'Escape') {
-            if (isDuo && brawlerTurn === 'p2') {
-              brawlerTurn = 'p1'; // back to P1 selection
+            if (needsTwoSelections && brawlerTurn !== 'p1') {
+              brawlerTurn = 'p1';
             } else {
               state.menuPage = 'mode';
               brawlerTurn = 'p1';
