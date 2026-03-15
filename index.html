@@ -2,26 +2,136 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Pong</title>
+  <title>Brawl Pong</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      background: #000;
+      background: radial-gradient(ellipse at 50% 40%, #2e0d5e 0%, #120620 65%, #09030f 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      font-family: monospace;
+      min-height: 100vh;
+      font-family: 'Arial Black', 'Arial Bold', Arial, sans-serif;
       color: #fff;
+      overflow: hidden;
     }
-    canvas { border: 2px solid #fff; display: block; }
-    #info { margin-top: 12px; font-size: 13px; color: #aaa; text-align: center; }
+
+    /* Floating background stars */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1.5px 1.5px at 12%  18%, rgba(255,220,80,0.7)  0%, transparent 100%),
+        radial-gradient(1px   1px   at 88%  25%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(2px   2px   at 34%  72%, rgba(255,220,80,0.5)  0%, transparent 100%),
+        radial-gradient(1px   1px   at 66%  8%,  rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 5%   55%, rgba(200,150,255,0.5) 0%, transparent 100%),
+        radial-gradient(1px   1px   at 92%  68%, rgba(255,220,80,0.4)  0%, transparent 100%),
+        radial-gradient(2px   2px   at 50%  90%, rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1px   1px   at 78%  82%, rgba(200,150,255,0.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 22%  40%, rgba(255,255,255,0.3) 0%, transparent 100%);
+      pointer-events: none;
+      animation: twinkle 4s ease-in-out infinite alternate;
+    }
+    @keyframes twinkle {
+      0%   { opacity: 0.6; }
+      50%  { opacity: 1.0; }
+      100% { opacity: 0.5; }
+    }
+
+    /* Outer glow pulse around the whole frame */
+    .arena-wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* The decorative frame around the canvas */
+    .arena-frame {
+      position: relative;
+      padding: 10px;
+      background: linear-gradient(145deg, #f5c400, #c49000 40%, #7a5200 60%, #f5c400);
+      border-radius: 14px;
+      box-shadow:
+        0 0 0 4px #1b1035,
+        0 0 0 7px #7a5200,
+        0 0 30px 8px rgba(245,196,0,0.45),
+        0 0 70px 20px rgba(140,60,255,0.3),
+        0 0 120px 40px rgba(80,20,160,0.2),
+        inset 0 0 20px rgba(0,0,0,0.5);
+      animation: frameGlow 3s ease-in-out infinite alternate;
+    }
+    @keyframes frameGlow {
+      0%   { box-shadow: 0 0 0 4px #1b1035, 0 0 0 7px #7a5200, 0 0 25px 6px rgba(245,196,0,0.4),  0 0 60px 18px rgba(140,60,255,0.25), inset 0 0 20px rgba(0,0,0,0.5); }
+      100% { box-shadow: 0 0 0 4px #1b1035, 0 0 0 7px #7a5200, 0 0 45px 14px rgba(245,196,0,0.65), 0 0 90px 30px rgba(180,80,255,0.45), inset 0 0 20px rgba(0,0,0,0.5); }
+    }
+
+    /* Corner star badges */
+    .arena-frame::before,
+    .arena-frame::after {
+      content: '★';
+      position: absolute;
+      font-size: 22px;
+      color: #fff;
+      text-shadow: 0 0 8px #f5c400, 0 0 18px #f5c400;
+      line-height: 1;
+    }
+    .arena-frame::before { top: -4px;  left: -4px;  transform: translate(-40%, -40%); }
+    .arena-frame::after  { top: -4px;  right: -4px; transform: translate(40%, -40%);  }
+    .corner-star-bl,
+    .corner-star-br {
+      position: absolute;
+      font-size: 22px;
+      color: #fff;
+      text-shadow: 0 0 8px #f5c400, 0 0 18px #f5c400;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .corner-star-bl { bottom: -4px; left:  -4px; transform: translate(-40%, 40%); }
+    .corner-star-br { bottom: -4px; right: -4px; transform: translate(40%,  40%); }
+
+    /* Title bar above canvas */
+    .arena-title {
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #1b1035;
+      text-shadow: none;
+      text-align: center;
+      margin-bottom: 6px;
+      user-select: none;
+    }
+
+    canvas { display: block; border-radius: 4px; }
+
+    #info {
+      margin-top: 14px;
+      padding: 6px 18px;
+      font-size: 12px;
+      color: #c8b8e8;
+      text-align: center;
+      letter-spacing: 1.5px;
+      background: rgba(30,10,60,0.6);
+      border: 1px solid rgba(245,196,0,0.2);
+      border-radius: 20px;
+      backdrop-filter: blur(4px);
+    }
   </style>
 </head>
 <body>
-  <canvas id="pong" width="800" height="500"></canvas>
-  <div id="info"></div>
+  <div class="arena-wrap">
+    <div class="arena-frame">
+      <div class="arena-title">⚡ BRAWL PONG ⚡</div>
+      <canvas id="pong" width="800" height="500"></canvas>
+      <span class="corner-star-bl">★</span>
+      <span class="corner-star-br">★</span>
+    </div>
+    <div id="info"></div>
+  </div>
 
   <script>
     const canvas = document.getElementById('pong');
@@ -30,14 +140,39 @@
 
     const W = canvas.width;
     const H = canvas.height;
-    const PADDLE_W = 12;
+    const PADDLE_W = 14;
     const PADDLE_H = 80;
-    const COOP_PADDLE_H = 58; // smaller paddles in co-op
-    const BALL_SIZE = 10;
+    const COOP_PADDLE_H = 58;
+    const BALL_SIZE = 14;
     const PADDLE_SPEED = 5;
     const WIN_SCORE = 7;
 
-    // ── Sound ────────────────────────────────────────────────────────────────
+    // ── Brawl Stars Palette ───────────────────────────────────────────────────
+    const C = {
+      bg:          '#1b1035',
+      bgGrid:      '#221445',
+      lane:        '#2a1a50',
+      accent:      '#f5c400',   // gold
+      accentDark:  '#c49000',
+      paddle1:     '#f5c400',   // gold
+      paddle1Dark: '#a06800',
+      paddle2:     '#e84040',   // red (bot/opponent)
+      paddle2Dark: '#8b1a1a',
+      coopP3:      '#40c8e8',   // cyan second coop player
+      coopP3Dark:  '#1a7a99',
+      gem:         '#e84040',
+      gemShine:    '#ff9999',
+      gemDark:     '#8b0000',
+      uiBg:        '#2d1b5e',
+      uiBorder:    '#f5c400',
+      uiShadow:    '#000',
+      textGold:    '#f5c400',
+      textWhite:   '#ffffff',
+      textGray:    '#a89fc0',
+      starBg:      '#ffffff',
+    };
+
+    // ── Sound ─────────────────────────────────────────────────────────────────
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function playBeep(frequency, duration, type = 'square', volume = 0.3) {
@@ -53,8 +188,8 @@
     }
 
     const sound = {
-      paddle: () => playBeep(480, 0.08),
-      wall:   () => playBeep(300, 0.06),
+      paddle: () => { playBeep(300, 0.04, 'square', 0.25); playBeep(500, 0.06, 'square', 0.15); },
+      wall:   () => playBeep(200, 0.05, 'sawtooth', 0.2),
       score: () => {
         const bufferSize = audioCtx.sampleRate * 0.8;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -64,24 +199,22 @@
         noise.buffer = buffer;
         const filter = audioCtx.createBiquadFilter();
         filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(800, audioCtx.currentTime);
-        filter.frequency.linearRampToValueAtTime(2400, audioCtx.currentTime + 0.4);
+        filter.frequency.setValueAtTime(900, audioCtx.currentTime);
+        filter.frequency.linearRampToValueAtTime(2800, audioCtx.currentTime + 0.4);
         filter.Q.value = 1.5;
         const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.8);
         noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
         noise.start(); noise.stop(audioCtx.currentTime + 0.8);
-        [440, 554, 660, 880].forEach((freq, i) => setTimeout(() => playBeep(freq, 0.25, 'sine', 0.2), i * 70));
+        [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playBeep(f, 0.2, 'square', 0.18), i * 65));
       },
       win: () => {
-        playBeep(520, 0.15, 'sine');
-        setTimeout(() => playBeep(660, 0.15, 'sine'), 160);
-        setTimeout(() => playBeep(780, 0.3,  'sine'), 320);
+        [523, 659, 784, 659, 1047].forEach((f, i) => setTimeout(() => playBeep(f, 0.18, 'square', 0.25), i * 100));
       },
     };
 
-    // ── Game modes: 'solo' | 'duo' | 'coop' ──────────────────────────────────
+    // ── State ─────────────────────────────────────────────────────────────────
     const state = { mode: 'menu', paused: false, over: false, winner: null, gameMode: 'solo' };
 
     const DIFFICULTIES = {
@@ -94,13 +227,100 @@
     let botError = 0;
 
     const ball = { x: W / 2, y: H / 2, vx: 0, vy: 0, speed: 3 };
-
-    // p1: left paddle (solo/duo), or upper-left paddle (coop)
-    // p2: right paddle (solo=bot, duo=human), or bot (coop)
-    // p3: lower-left paddle (coop only)
     const p1 = { y: H / 2 - PADDLE_H / 2, score: 0, up: false, down: false };
     const p2 = { y: H / 2 - PADDLE_H / 2, score: 0, up: false, down: false };
-    const p3 = { y: H / 2 + 10,           score: 0, up: false, down: false }; // coop second player
+    const p3 = { y: H / 2 + 10,           score: 0, up: false, down: false };
+
+    // Particles for hit effects and win screen
+    const particles = [];
+
+    // Ball trail positions
+    const trail = [];
+    const TRAIL_LEN = 10;
+
+    // Score flash state
+    let scoreFlash = { active: false, x: 0, y: 0, life: 0, color: '#fff' };
+
+    // Shockwave rings on goal
+    const shockwaves = [];
+
+    // Screen shake
+    let shake = { x: 0, y: 0, life: 0 };
+
+    // Floating +1 popup texts
+    const popups = [];
+
+    function spawnParticles(x, y, color, count = 8, star = false) {
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
+        const speed = 2 + Math.random() * 4;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1, color,
+          size: 3 + Math.random() * 4,
+          star,
+          rot: Math.random() * Math.PI * 2,
+          rotV: (Math.random() - 0.5) * 0.3,
+        });
+      }
+    }
+
+    function spawnGoalEffect(x, y, color, scoreX) {
+      // 1. Screen shake
+      shake = { x: 0, y: 0, life: 1 };
+
+      // 2. Three delayed shockwave rings
+      [0, 80, 160].forEach(delay => {
+        setTimeout(() => {
+          shockwaves.push({ x, y, r: 10, life: 1, color, maxR: 180 });
+        }, delay);
+      });
+
+      // 3. Massive star + gem burst at impact point
+      spawnParticles(x, y, color,       14, true);
+      spawnParticles(x, y, '#ffffff',   10, false);
+      spawnParticles(x, y, C.accent,     8, true);
+      // Extra fast outward gems
+      for (let i = 0; i < 8; i++) {
+        const angle = (Math.PI * 2 / 8) * i;
+        const speed = 6 + Math.random() * 5;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1.2, color,
+          size: 6 + Math.random() * 5,
+          star: false,
+          rot: 0, rotV: 0,
+        });
+      }
+
+      // 4. +1 popup floating up on scorer's side
+      popups.push({ x: scoreX, y: H / 2 + 20, life: 1, color });
+    }
+
+    function spawnWinParticles() {
+      const colors = [C.accent, '#fff', '#ff6060', C.coopP3, '#ff88ff'];
+      for (let i = 0; i < 60; i++) {
+        const x = Math.random() * W;
+        const y = Math.random() * H * 0.6;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const angle = Math.PI * 0.3 + Math.random() * Math.PI * 1.4;
+        const speed = 3 + Math.random() * 6;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: -Math.abs(Math.sin(angle) * speed) - 2,
+          life: 1 + Math.random() * 0.5,
+          color, size: 5 + Math.random() * 7,
+          star: Math.random() > 0.4,
+          rot: Math.random() * Math.PI * 2,
+          rotV: (Math.random() - 0.5) * 0.25,
+        });
+      }
+    }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
     function paddleH(paddle) {
@@ -127,6 +347,12 @@
         p2.y = H / 2 - PADDLE_H / 2;
       }
       ball.speed = 3;
+      particles.length = 0;
+      trail.length = 0;
+      shockwaves.length = 0;
+      popups.length = 0;
+      shake.life = 0; shake.x = 0; shake.y = 0;
+      scoreFlash.active = false;
       state.over = false; state.winner = null; state.paused = false;
       state.mode = 'playing';
       resetBall(Math.random() < 0.5 ? 1 : -1);
@@ -141,11 +367,11 @@
 
     function updateInfo() {
       if (state.gameMode === 'solo') {
-        infoEl.textContent = `Spieler: W/S oder ↑/↓  |  Schwierigkeit: ${difficulty}  |  Enter: Pause`;
+        infoEl.textContent = `SPIELER: W/S oder ↑/↓  •  SCHWIERIGKEIT: ${difficulty.toUpperCase()}  •  ENTER: PAUSE`;
       } else if (state.gameMode === 'coop') {
-        infoEl.textContent = `S1: W/S  |  S2: ↑/↓  |  Schwierigkeit: ${difficulty}  |  Enter: Pause`;
+        infoEl.textContent = `S1: W/S  •  S2: ↑/↓  •  SCHWIERIGKEIT: ${difficulty.toUpperCase()}  •  ENTER: PAUSE`;
       } else {
-        infoEl.textContent = 'Spieler 1: W/S  |  Spieler 2: ↑/↓  |  Enter: Pause';
+        infoEl.textContent = 'SPIELER 1: W/S  •  SPIELER 2: ↑/↓  •  ENTER: PAUSE';
       }
     }
 
@@ -155,8 +381,8 @@
       let x = ball.x, y = ball.y, vx = ball.vx, vy = ball.vy;
       for (let i = 0; i < 600; i++) {
         x += vx; y += vy;
-        if (y < 0)  { y = -y;         vy =  Math.abs(vy); }
-        if (y > H)  { y = 2 * H - y;  vy = -Math.abs(vy); }
+        if (y < 0)  { y = -y;        vy =  Math.abs(vy); }
+        if (y > H)  { y = 2*H - y;   vy = -Math.abs(vy); }
         if (x >= p2x) return y;
         if (x <= 20) vx = Math.abs(vx);
       }
@@ -165,20 +391,17 @@
 
     function updateBot() {
       const diff = DIFFICULTIES[difficulty];
-      if (ball.vx > 0) {
-        const predicted = predictBallY();
-        botTarget = predicted + botError + (Math.random() * 2 - 1) * diff.predictionNoise;
-      } else {
-        botTarget = H / 2;
-      }
+      botTarget = ball.vx > 0
+        ? predictBallY() + botError + (Math.random() * 2 - 1) * diff.predictionNoise
+        : H / 2;
       const center = p2.y + PADDLE_H / 2;
       const delta = botTarget - center;
       p2.y += Math.min(Math.abs(delta), diff.speed) * Math.sign(delta);
       clampPaddle(p2);
     }
 
-    // ── Paddle collision helper ───────────────────────────────────────────────
-    function checkPaddleHit(paddle, px, incomingVxSign) {
+    // ── Paddle collision ──────────────────────────────────────────────────────
+    function checkPaddleHit(paddle, px, incomingVxSign, particleColor) {
       const ph = paddleH(paddle);
       if (
         Math.sign(ball.vx) === incomingVxSign &&
@@ -195,6 +418,7 @@
         ball.speed = Math.min(ball.speed + 0.2, 9);
         ball.vx = -incomingVxSign * ball.speed * Math.cos(angle);
         ball.vy = ball.speed * Math.sin(angle);
+        spawnParticles(ball.x, ball.y, particleColor);
         sound.paddle();
         return true;
       }
@@ -207,154 +431,536 @@
 
       const isCoop = state.gameMode === 'coop';
 
-      // Move p1
       if (p1.up)   p1.y -= PADDLE_SPEED;
       if (p1.down) p1.y += PADDLE_SPEED;
       clampPaddle(p1);
 
-      // Move p2 / bot
       if (state.gameMode === 'duo') {
         if (p2.up)   p2.y -= PADDLE_SPEED;
         if (p2.down) p2.y += PADDLE_SPEED;
         clampPaddle(p2);
       } else {
-        updateBot(); // solo or coop: p2 is always bot
+        updateBot();
       }
 
-      // Move p3 (coop second player, right side same x as p1 but lower)
       if (isCoop) {
         if (p3.up)   p3.y -= PADDLE_SPEED;
         if (p3.down) p3.y += PADDLE_SPEED;
         clampPaddle(p3);
       }
 
+      // Ball trail
+      trail.push({ x: ball.x, y: ball.y });
+      if (trail.length > TRAIL_LEN) trail.shift();
+
       ball.x += ball.vx;
       ball.y += ball.vy;
 
-      // Walls
-      if (ball.y - BALL_SIZE / 2 <= 0) { ball.y = BALL_SIZE / 2; ball.vy *= -1; sound.wall(); }
-      if (ball.y + BALL_SIZE / 2 >= H) { ball.y = H - BALL_SIZE / 2; ball.vy *= -1; sound.wall(); }
-
-      const p1x  = 20;
-      const p2x  = W - 20 - PADDLE_W;
-
-      // Left side: p1 (and p3 in coop)
-      if (!checkPaddleHit(p1, p1x, -1) && isCoop) {
-        checkPaddleHit(p3, p1x, -1);
+      if (scoreFlash.active) {
+        scoreFlash.life -= 0.04;
+        if (scoreFlash.life <= 0) scoreFlash.active = false;
       }
 
-      // Right side: p2
-      checkPaddleHit(p2, p2x, 1);
+      // Shockwaves
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        const sw = shockwaves[i];
+        sw.r += (sw.maxR - sw.r) * 0.12;
+        sw.life -= 0.035;
+        if (sw.life <= 0) shockwaves.splice(i, 1);
+      }
 
-      // Score
+      // Popups
+      for (let i = popups.length - 1; i >= 0; i--) {
+        popups[i].y -= 1.5;
+        popups[i].life -= 0.025;
+        if (popups[i].life <= 0) popups.splice(i, 1);
+      }
+
+      // Screen shake decay
+      if (shake.life > 0) {
+        shake.life -= 0.08;
+        const mag = shake.life * 10;
+        shake.x = (Math.random() - 0.5) * mag;
+        shake.y = (Math.random() - 0.5) * mag;
+        if (shake.life <= 0) { shake.x = 0; shake.y = 0; }
+      }
+
+      if (ball.y - BALL_SIZE / 2 <= 0) {
+        ball.y = BALL_SIZE / 2; ball.vy *= -1;
+        spawnParticles(ball.x, 0, C.textWhite, 5);
+        sound.wall();
+      }
+      if (ball.y + BALL_SIZE / 2 >= H) {
+        ball.y = H - BALL_SIZE / 2; ball.vy *= -1;
+        spawnParticles(ball.x, H, C.textWhite, 5);
+        sound.wall();
+      }
+
+      const p1x = 20;
+      const p2x = W - 20 - PADDLE_W;
+
+      if (!checkPaddleHit(p1, p1x, -1, C.accent) && isCoop) {
+        checkPaddleHit(p3, p1x, -1, C.coopP3);
+      }
+      checkPaddleHit(p2, p2x, 1, C.paddle2);
+
+      // Update particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy;
+        p.vy += 0.15;
+        p.life -= 0.045;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
       if (ball.x < 0) {
         p2.score++;
         ball.speed = 3;
-        const botWins = isCoop ? 'Bot' : (state.gameMode === 'solo' ? 'Bot' : '2');
-        if (p2.score >= WIN_SCORE) { state.over = true; state.winner = botWins; sound.win(); }
+        trail.length = 0;
+        scoreFlash = { active: true, x: 3*W/4, y: H/2, life: 1, color: '#ff6060' };
+        spawnGoalEffect(20, ball.y, '#ff6060', 3*W/4);
+        const botWins = state.gameMode === 'duo' ? 'Spieler 2' : 'Bot';
+        if (p2.score >= WIN_SCORE) { state.over = true; state.winner = botWins; sound.win(); spawnWinParticles(); }
         else { sound.score(); resetBall(1); }
       }
       if (ball.x > W) {
         p1.score++;
         ball.speed = 3;
-        const humanWins = isCoop ? 'Spieler-Team' : 'Spieler 1';
-        if (p1.score >= WIN_SCORE) { state.over = true; state.winner = humanWins; sound.win(); }
+        trail.length = 0;
+        scoreFlash = { active: true, x: W/4, y: H/2, life: 1, color: C.accent };
+        spawnGoalEffect(W - 20, ball.y, C.accent, W/4);
+        const humanWins = state.gameMode === 'coop' ? 'Spieler-Team' : 'Spieler 1';
+        if (p1.score >= WIN_SCORE) { state.over = true; state.winner = humanWins; sound.win(); spawnWinParticles(); }
         else { sound.score(); resetBall(-1); }
       }
     }
 
-    // ── Draw ──────────────────────────────────────────────────────────────────
-    function drawRect(x, y, w, h, color = '#fff') {
-      ctx.fillStyle = color; ctx.fillRect(x, y, w, h);
+    // ── Draw helpers ──────────────────────────────────────────────────────────
+    function drawRoundedRect(x, y, w, h, r, fill, stroke, strokeW = 3) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.arcTo(x + w, y, x + w, y + r, r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+      ctx.lineTo(x + r, y + h);
+      ctx.arcTo(x, y + h, x, y + h - r, r);
+      ctx.lineTo(x, y + r);
+      ctx.arcTo(x, y, x + r, y, r);
+      ctx.closePath();
+      if (fill)   { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = strokeW; ctx.stroke(); }
     }
 
-    function drawText(text, x, y, size = 32, color = '#fff') {
-      ctx.fillStyle = color;
-      ctx.font = `${size}px monospace`;
+    function drawOutlinedText(text, x, y, size, fill, outline, outlineW = 4) {
+      ctx.font = `900 ${size}px 'Arial Black', Arial, sans-serif`;
       ctx.textAlign = 'center';
+      ctx.lineWidth = outlineW;
+      ctx.strokeStyle = outline;
+      ctx.lineJoin = 'round';
+      ctx.strokeText(text, x, y);
+      ctx.fillStyle = fill;
       ctx.fillText(text, x, y);
     }
 
+    // Draw a Brawl Stars style paddle (rounded rect with highlight)
+    function drawPaddle(x, y, ph, fillColor, darkColor) {
+      // Shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetX = 3; ctx.shadowOffsetY = 3;
+
+      drawRoundedRect(x, y, PADDLE_W, ph, 5, darkColor, '#000', 2);
+      drawRoundedRect(x, y, PADDLE_W, ph, 5, fillColor, '#000', 2);
+
+      // Highlight stripe
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillRect(x + 2, y + 4, 4, ph - 8);
+    }
+
+    // Draw gem (Brawl Stars gem shape = diamond)
+    function drawGem(x, y, size) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 10;
+
+      // Gem body
+      ctx.beginPath();
+      ctx.moveTo(0, -size);
+      ctx.lineTo(size * 0.65, -size * 0.1);
+      ctx.lineTo(0, size);
+      ctx.lineTo(-size * 0.65, -size * 0.1);
+      ctx.closePath();
+      ctx.fillStyle = C.gem;
+      ctx.fill();
+      ctx.strokeStyle = C.gemDark;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Shine
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.25, -size * 0.8);
+      ctx.lineTo(size * 0.05, -size * 0.3);
+      ctx.lineTo(-size * 0.3, -size * 0.3);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // ── Draw background ───────────────────────────────────────────────────────
+
+    // Draw a 5-pointed star
+    function drawStar(cx, cy, r, fill, stroke, strokeW = 2) {
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const angle = (Math.PI / 5) * i - Math.PI / 2;
+        const radius = i % 2 === 0 ? r : r * 0.42;
+        const x = cx + Math.cos(angle) * radius;
+        const y = cy + Math.sin(angle) * radius;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      if (fill)   { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = strokeW; ctx.stroke(); }
+    }
+
+    // Draw a Brawl Stars style bush cluster
+    function drawBush(cx, cy, size) {
+      const blobs = [
+        [0, 0, size], [-size * 0.7, size * 0.2, size * 0.75],
+        [size * 0.7, size * 0.2, size * 0.75], [0, size * 0.55, size * 0.65],
+      ];
+      blobs.forEach(([dx, dy, r]) => {
+        ctx.beginPath();
+        ctx.arc(cx + dx, cy + dy, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#1a5c1a';
+        ctx.fill();
+        ctx.strokeStyle = '#0d3a0d';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // highlight
+        ctx.beginPath();
+        ctx.arc(cx + dx - r * 0.2, cy + dy - r * 0.25, r * 0.35, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(80,200,80,0.25)';
+        ctx.fill();
+      });
+    }
+
+    // Draw a wooden crate
+    function drawCrate(x, y, size) {
+      const s = size;
+      drawRoundedRect(x - s/2, y - s/2, s, s, 4, '#8B5E3C', '#4a2e10', 2);
+      // planks
+      ctx.strokeStyle = '#4a2e10'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(x - s/2 + 4, y); ctx.lineTo(x + s/2 - 4, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, y - s/2 + 4); ctx.lineTo(x, y + s/2 - 4); ctx.stroke();
+      // corner bolts
+      [[-.38,-.38],[.38,-.38],[-.38,.38],[.38,.38]].forEach(([fx, fy]) => {
+        ctx.beginPath();
+        ctx.arc(x + fx*s, y + fy*s, 2.5, 0, Math.PI*2);
+        ctx.fillStyle = '#c8903a'; ctx.fill();
+        ctx.strokeStyle = '#4a2e10'; ctx.lineWidth = 1; ctx.stroke();
+      });
+    }
+
+    // Small decorative gem (for field)
+    function drawMiniGem(x, y, size, color = '#e84040') {
+      ctx.save(); ctx.translate(x, y);
+      ctx.beginPath();
+      ctx.moveTo(0, -size); ctx.lineTo(size*0.6, -size*0.1);
+      ctx.lineTo(0, size);  ctx.lineTo(-size*0.6, -size*0.1);
+      ctx.closePath();
+      ctx.fillStyle = color; ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBackground() {
+      // ── Grass base ──────────────────────────────────────────────────────────
+      // Tile the field with alternating dark-green squares (like BS arena grass)
+      const tileSize = 40;
+      for (let ty = 0; ty < H / tileSize + 1; ty++) {
+        for (let tx = 0; tx < W / tileSize + 1; tx++) {
+          ctx.fillStyle = (tx + ty) % 2 === 0 ? '#1e5c1e' : '#1a521a';
+          ctx.fillRect(tx * tileSize, ty * tileSize, tileSize, tileSize);
+        }
+      }
+
+      // ── Dirt lane in center (gem grab lane) ─────────────────────────────────
+      const laneW = 120;
+      const laneGrad = ctx.createLinearGradient(W/2 - laneW/2, 0, W/2 + laneW/2, 0);
+      laneGrad.addColorStop(0,   'transparent');
+      laneGrad.addColorStop(0.2, 'rgba(120,80,30,0.35)');
+      laneGrad.addColorStop(0.5, 'rgba(140,90,35,0.5)');
+      laneGrad.addColorStop(0.8, 'rgba(120,80,30,0.35)');
+      laneGrad.addColorStop(1,   'transparent');
+      ctx.fillStyle = laneGrad;
+      ctx.fillRect(W/2 - laneW/2, 0, laneW, H);
+
+      // ── Bushes (corners + mid-sides) ────────────────────────────────────────
+      ctx.globalAlpha = 0.82;
+      // Corners
+      drawBush(52,  48,  18);
+      drawBush(W - 52, 48,  18);
+      drawBush(52,  H - 48, 18);
+      drawBush(W - 52, H - 48, 18);
+      // Mid sides (flanking the paddles)
+      drawBush(52,  H / 2, 16);
+      drawBush(W - 52, H / 2, 16);
+      ctx.globalAlpha = 1;
+
+      // ── Crates (symmetric, mid-field) ───────────────────────────────────────
+      ctx.globalAlpha = 0.75;
+      drawCrate(W/2 - 140, H/2, 30);
+      drawCrate(W/2 + 140, H/2, 30);
+      drawCrate(W/2, 60, 26);
+      drawCrate(W/2, H - 60, 26);
+      ctx.globalAlpha = 1;
+
+      // ── Center circle (gem grab) ─────────────────────────────────────────────
+      ctx.beginPath();
+      ctx.arc(W/2, H/2, 38, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(245,196,0,0.25)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(W/2, H/2, 38, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(245,196,0,0.07)';
+      ctx.fill();
+      // Mini gem icon in center
+      drawMiniGem(W/2, H/2, 10, 'rgba(232,64,64,0.35)');
+
+      // ── Center dashed divider ────────────────────────────────────────────────
+      ctx.setLineDash([12, 14]);
+      ctx.strokeStyle = 'rgba(245,196,0,0.35)';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // ── Arena border (layered, Brawl Stars style) ────────────────────────────
+      // Outer dark outline
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 12;
+      ctx.strokeRect(0, 0, W, H);
+
+      // Gold border
+      ctx.strokeStyle = C.accent;
+      ctx.lineWidth = 7;
+      ctx.strokeRect(3.5, 3.5, W - 7, H - 7);
+
+      // Inner dark line
+      ctx.strokeStyle = '#7a5200';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(8, 8, W - 16, H - 16);
+
+      // ── Corner stars ────────────────────────────────────────────────────────
+      const corners = [[18, 18], [W-18, 18], [18, H-18], [W-18, H-18]];
+      corners.forEach(([cx, cy]) => {
+        drawStar(cx, cy, 11, C.accent, '#7a5200', 2);
+      });
+
+      // ── Score panel frames ───────────────────────────────────────────────────
+      // Left panel
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = '#f5c400';
+      ctx.beginPath();
+      ctx.arc(W/4, 55, 42, 0, Math.PI*2);
+      ctx.fill();
+      // Right panel
+      ctx.beginPath();
+      ctx.arc(3*W/4, 55, 42, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // ── Draw menu ─────────────────────────────────────────────────────────────
     const MENU_MODES = [
-      { label: '1 Spieler',     key: 'solo' },
-      { label: '2 Spieler',     key: 'duo'  },
-      { label: 'Co-Op vs Bot',  key: 'coop' },
+      { label: '1 Spieler',    key: 'solo' },
+      { label: '2 Spieler',    key: 'duo'  },
+      { label: 'Co-Op vs Bot', key: 'coop' },
     ];
 
     function drawMenu() {
-      drawRect(0, 0, W, H, '#000');
-      drawText('PONG', W / 2, 90, 64);
+      drawBackground();
 
+      // Title
+      drawOutlinedText('BRAWL', W/2, 90, 72, C.accent, '#000', 6);
+      drawOutlinedText('PONG',  W/2, 148, 72, '#ffffff', '#000', 6);
+
+      // Mode buttons
       MENU_MODES.forEach((m, i) => {
-        const y = 175 + i * 65;
+        const by = 210 + i * 68;
         const active = state.gameMode === m.key;
-        ctx.strokeStyle = active ? '#fff' : '#555';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(W / 2 - 130, y - 28, 260, 44);
-        drawText(m.label, W / 2, y, 24, active ? '#fff' : '#666');
+        const fill   = active ? C.accent    : '#2d1b5e';
+        const border = active ? '#fff'      : '#4a2d8a';
+        const tColor = active ? '#1b1035'   : C.textGray;
+
+        if (active) {
+          ctx.shadowColor = C.accent;
+          ctx.shadowBlur = 15;
+        }
+        drawRoundedRect(W/2 - 150, by - 24, 300, 48, 10, fill, border, 3);
+        ctx.shadowBlur = 0;
+        drawOutlinedText(m.label, W/2, by + 10, 22, tColor, active ? '#a06800' : 'transparent', 2);
       });
 
+      // Difficulty
       const showDiff = state.gameMode === 'solo' || state.gameMode === 'coop';
       if (showDiff) {
-        drawText('Schwierigkeit:', W / 2, 380, 18, '#aaa');
+        drawOutlinedText('SCHWIERIGKEIT', W/2, 432, 16, C.textGray, 'transparent');
         ['leicht', 'mittel', 'schwer'].forEach((d, i) => {
-          const x = W / 2 - 160 + i * 160;
+          const dx = W/2 - 160 + i * 160;
           const active = difficulty === d;
-          ctx.strokeStyle = active ? '#fff' : '#444';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x - 60, 392, 120, 36);
-          drawText(d, x, 416, 18, active ? '#fff' : '#555');
+          if (active) { ctx.shadowColor = C.accent; ctx.shadowBlur = 10; }
+          drawRoundedRect(dx - 58, 440, 116, 34, 8,
+            active ? C.accent : '#2d1b5e',
+            active ? '#fff' : '#4a2d8a', 2);
+          ctx.shadowBlur = 0;
+          drawOutlinedText(d.toUpperCase(), dx, 464, 15,
+            active ? '#1b1035' : C.textGray, 'transparent');
         });
       }
 
-      drawText('Enter: Starten', W / 2, H - 40, 18, '#aaa');
-      drawText('↑/↓ Modus  |  ←/→ Schwierigkeit', W / 2, H - 18, 13, '#444');
+      drawOutlinedText('ENTER: START  •  ↑/↓: MODUS  •  ←/→: SCHWIERIGKEIT',
+        W/2, H - 14, 13, C.textGray, 'transparent');
     }
 
+    // ── Draw game ─────────────────────────────────────────────────────────────
     function draw() {
       if (state.mode === 'menu') { drawMenu(); return; }
 
-      drawRect(0, 0, W, H, '#000');
+      ctx.save();
+      ctx.translate(shake.x, shake.y);
+      drawBackground();
 
-      ctx.setLineDash([10, 15]);
-      ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Scores: left = human team, right = bot/opponent
+      // Score display
       const leftLabel  = state.gameMode === 'coop' ? 'TEAM' : 'S1';
       const rightLabel = state.gameMode === 'duo'  ? 'S2'   : 'BOT';
-      drawText(p1.score, W / 4, 55, 48);
-      drawText(p2.score, (3 * W) / 4, 55, 48);
-      drawText(leftLabel,  W / 4,       80, 13, '#555');
-      drawText(rightLabel, (3 * W) / 4, 80, 13, '#555');
 
-      // Left paddle(s)
+      drawOutlinedText(String(p1.score), W/4,       62, 52, C.accent,  '#000', 5);
+      drawOutlinedText(String(p2.score), 3*W/4,     62, 52, '#ffffff', '#000', 5);
+      drawOutlinedText(leftLabel,  W/4,       84, 13, C.textGray, 'transparent');
+      drawOutlinedText(rightLabel, 3*W/4,     84, 13, C.textGray, 'transparent');
+
+      // Paddles
       const p1x = 20;
-      drawRect(p1x, p1.y, PADDLE_W, paddleH(p1));
+      const p2x = W - 20 - PADDLE_W;
+
       if (state.gameMode === 'coop') {
-        drawRect(p1x, p3.y, PADDLE_W, paddleH(p3), '#adf');
+        drawPaddle(p1x, p1.y, COOP_PADDLE_H, C.paddle1, C.paddle1Dark);
+        drawPaddle(p1x, p3.y, COOP_PADDLE_H, C.coopP3, C.coopP3Dark);
+      } else {
+        drawPaddle(p1x, p1.y, PADDLE_H, C.paddle1, C.paddle1Dark);
+      }
+      drawPaddle(p2x, p2.y, PADDLE_H, C.paddle2, C.paddle2Dark);
+
+      // Ball trail
+      trail.forEach((t, i) => {
+        const alpha = (i / TRAIL_LEN) * 0.45;
+        const size  = (BALL_SIZE / 2) * (i / TRAIL_LEN) * 0.9;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = C.gem;
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+
+      // Ball glow
+      ctx.shadowColor = C.gem;
+      ctx.shadowBlur = 18;
+      drawGem(ball.x, ball.y, BALL_SIZE / 2 + 2);
+      ctx.shadowBlur = 0;
+
+      // Score flash ring
+      if (scoreFlash.active) {
+        const r = (1 - scoreFlash.life) * 90 + 30;
+        ctx.globalAlpha = scoreFlash.life * 0.5;
+        ctx.beginPath();
+        ctx.arc(scoreFlash.x, scoreFlash.y, r, 0, Math.PI * 2);
+        ctx.strokeStyle = scoreFlash.color;
+        ctx.lineWidth = 6;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
       }
 
-      // Right paddle
-      drawRect(W - 20 - PADDLE_W, p2.y, PADDLE_W, PADDLE_H);
+      // Particles
+      particles.forEach(p => {
+        const alpha = Math.min(p.life, 1);
+        ctx.globalAlpha = alpha;
+        if (p.star) {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          drawStar(0, 0, p.size * Math.min(p.life, 1), p.color, '#000', 1);
+          ctx.restore();
+          p.rot += p.rotV;
+        } else {
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * Math.min(p.life, 1), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        p.vy += 0.18;
+      });
+      ctx.globalAlpha = 1;
 
-      // Ball
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.arc(ball.x, ball.y, BALL_SIZE / 2, 0, Math.PI * 2);
-      ctx.fill();
+      // Shockwave rings
+      shockwaves.forEach(sw => {
+        ctx.globalAlpha = sw.life * 0.7;
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+        ctx.strokeStyle = sw.color;
+        ctx.lineWidth = 4 * sw.life;
+        ctx.stroke();
+        // Inner fill flash
+        ctx.globalAlpha = sw.life * 0.08;
+        ctx.fillStyle = sw.color;
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
 
+      // +1 popups
+      popups.forEach(p => {
+        const alpha = Math.min(p.life * 2, 1);
+        ctx.globalAlpha = alpha;
+        drawOutlinedText('+1', p.x, p.y, 42, p.color, '#000', 5);
+      });
+      ctx.globalAlpha = 1;
+
+      ctx.restore(); // end shake transform
+
+      // Overlays
       if (state.over) {
-        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillStyle = 'rgba(10,5,25,0.72)';
         ctx.fillRect(0, 0, W, H);
-        drawText(`${state.winner} gewinnt!`, W / 2, H / 2 - 20, 40);
-        drawText('Enter: Nochmal  |  Esc: Menü', W / 2, H / 2 + 30, 18, '#aaa');
+        // Glowing panel
+        ctx.shadowColor = C.accent;
+        ctx.shadowBlur = 30;
+        drawRoundedRect(W/2 - 240, H/2 - 90, 480, 175, 18, '#1b1035', C.accent, 5);
+        ctx.shadowBlur = 0;
+        // Stars beside text
+        drawStar(W/2 - 190, H/2 - 30, 20, C.accent, '#7a5200', 2);
+        drawStar(W/2 + 190, H/2 - 30, 20, C.accent, '#7a5200', 2);
+        drawOutlinedText(`${state.winner} gewinnt!`, W/2, H/2 - 14, 42, C.accent, '#000', 5);
+        drawOutlinedText('ENTER: Nochmal  •  ESC: Menü', W/2, H/2 + 44, 18, C.textGray, 'transparent');
       } else if (state.paused) {
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillStyle = 'rgba(10,5,25,0.72)';
         ctx.fillRect(0, 0, W, H);
-        drawText('PAUSE', W / 2, H / 2, 48);
-        drawText('Esc: Menü', W / 2, H / 2 + 50, 18, '#aaa');
+        ctx.shadowColor = C.accent;
+        ctx.shadowBlur = 20;
+        drawRoundedRect(W/2 - 160, H/2 - 70, 320, 130, 16, '#1b1035', C.accent, 4);
+        ctx.shadowBlur = 0;
+        drawOutlinedText('PAUSE', W/2, H/2 - 8, 52, C.accent, '#000', 5);
+        drawOutlinedText('ESC: Menü', W/2, H/2 + 42, 17, C.textGray, 'transparent');
       }
     }
 
@@ -389,15 +995,15 @@
       if (e.key === 's') { p1.down = true; e.preventDefault(); }
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        if (isCoop)                        p3.up = true;
+        if (isCoop) p3.up = true;
         else if (state.gameMode === 'solo') p1.up = true;
-        else                               p2.up = true;
+        else p2.up = true;
       }
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        if (isCoop)                        p3.down = true;
+        if (isCoop) p3.down = true;
         else if (state.gameMode === 'solo') p1.down = true;
-        else                               p2.down = true;
+        else p2.down = true;
       }
     });
 
@@ -406,14 +1012,14 @@
       if (e.key === 'w') p1.up = false;
       if (e.key === 's') p1.down = false;
       if (e.key === 'ArrowUp') {
-        if (isCoop)                         p3.up = false;
-        else if (state.gameMode === 'solo')  p1.up = false;
-        else                                p2.up = false;
+        if (isCoop) p3.up = false;
+        else if (state.gameMode === 'solo') p1.up = false;
+        else p2.up = false;
       }
       if (e.key === 'ArrowDown') {
-        if (isCoop)                         p3.down = false;
-        else if (state.gameMode === 'solo')  p1.down = false;
-        else                                p2.down = false;
+        if (isCoop) p3.down = false;
+        else if (state.gameMode === 'solo') p1.down = false;
+        else p2.down = false;
       }
     });
 
