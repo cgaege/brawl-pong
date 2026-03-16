@@ -474,7 +474,14 @@
     };
 
     // ── State ─────────────────────────────────────────────────────────────────
-    const state = { mode: 'menu', menuPage: 'mode', paused: false, over: false, winner: null, gameMode: 'solo' };
+    const state = { mode: 'menu', menuPage: 'mode', paused: false, over: false, winner: null, gameMode: 'solo', vsTimer: 0, serving: false, serveDirection: 1 };
+
+    // Avatar reaction animation state
+    const avatarAnim = {
+      p1: { type: null, life: 0 },
+      p2: { type: null, life: 0 },
+      p3: { type: null, life: 0 },
+    };
 
     const DIFFICULTIES = {
       leicht: { speed: 2.8, errorMargin: 55, predictionNoise: 3 },
@@ -715,11 +722,18 @@
 
     function resetBall(direction = 1) {
       ball.x = W / 2; ball.y = H / 2;
+      ball.vx = 0; ball.vy = 0;
       botTarget = H / 2;
       botError = (Math.random() * 2 - 1) * DIFFICULTIES[difficulty].errorMargin;
+      state.serving = true;
+      state.serveDirection = direction;
+    }
+
+    function serveBall() {
       const angle = (Math.random() * 60 - 30) * (Math.PI / 180);
-      ball.vx = direction * ball.speed * Math.cos(angle);
+      ball.vx = state.serveDirection * ball.speed * Math.cos(angle);
       ball.vy = ball.speed * Math.sin(angle);
+      state.serving = false;
     }
 
     function startGame() {
@@ -757,7 +771,11 @@
       initObstacles();
       state.over = false; state.winner = null; state.paused = false;
       state.mode = 'playing';
-      resetBall(Math.random() < 0.5 ? 1 : -1);
+      state.vsTimer = 2.0;
+      avatarAnim.p1 = { type: null, life: 0 };
+      avatarAnim.p2 = { type: null, life: 0 };
+      avatarAnim.p3 = { type: null, life: 0 };
+      resetBall(state.gameMode === 'duo' ? (Math.random() < 0.5 ? 1 : -1) : 1);
       updateInfo();
     }
 
@@ -831,6 +849,20 @@
     function update() {
       if (state.mode !== 'playing' || state.paused || state.over) return;
 
+      const dt = 1 / 60;
+
+      // VS intro timer — block game logic while it counts down
+      if (state.vsTimer > 0) {
+        state.vsTimer -= dt;
+        if (state.vsTimer < 0) state.vsTimer = 0;
+        return;
+      }
+
+      // Tick avatar animations
+      for (const side of ['p1', 'p2', 'p3']) {
+        if (avatarAnim[side].life > 0) avatarAnim[side].life -= dt;
+      }
+
       const isCoop = state.gameMode === 'coop';
 
       const sp1 = effectiveSpeed(PADDLE_SPEED, 'p1');
@@ -851,6 +883,22 @@
         if (p3.up)   p3.y -= sp1;
         if (p3.down) p3.y += sp1;
         clampPaddle(p3);
+      }
+
+      // Ball sticks to serving paddle
+      if (state.serving) {
+        const p1x = 20;
+        const p2x = W - 20 - PADDLE_W;
+        if (state.serveDirection === 1) {
+          // p1 serves — ball sticks to right edge of p1's paddle, follows its center
+          ball.x = p1x + PADDLE_W + BALL_SIZE / 2 + 2;
+          ball.y = p1.y + effectivePaddleH(p1, 'p1') / 2;
+        } else {
+          // p2 serves — ball sticks to left edge of p2's paddle
+          ball.x = p2x - BALL_SIZE / 2 - 2;
+          ball.y = p2.y + PADDLE_H / 2;
+        }
+        return;
       }
 
       // Ball trail
@@ -925,7 +973,6 @@
       }
 
       // Tick active effects
-      const dt = 1 / 60;
       for (const side of ['p1', 'p2']) {
         if (effects[side]) {
           effects[side].timeLeft -= dt;
@@ -956,6 +1003,10 @@
         trail.length = 0;
         scoreFlash = { active: true, x: 3*W/4, y: H/2, life: 1, color: '#ff6060' };
         spawnGoalEffect(20, ball.y, '#ff6060', 3*W/4);
+        // Avatar reactions: p2 scores → p2 bounces, p1 (and p3 in coop) shakes
+        avatarAnim.p2 = { type: 'bounce', life: 0.6 };
+        avatarAnim.p1 = { type: 'shake', life: 0.6 };
+        if (state.gameMode === 'coop') avatarAnim.p3 = { type: 'shake', life: 0.6 };
         const botWins = state.gameMode === 'duo' ? 'Spieler 2' : 'Bot';
         if (p2.score >= WIN_SCORE) { state.over = true; state.winner = botWins; sound.win(); spawnWinParticles(); }
         else { sound.score(); resetBall(1); initObstacles(); powerUps.length = 0; clearEffects(); }
@@ -966,9 +1017,13 @@
         trail.length = 0;
         scoreFlash = { active: true, x: W/4, y: H/2, life: 1, color: C.accent };
         spawnGoalEffect(W - 20, ball.y, C.accent, W/4);
+        // Avatar reactions: p1 (and p3 in coop) bounce, p2 shakes
+        avatarAnim.p1 = { type: 'bounce', life: 0.6 };
+        if (state.gameMode === 'coop') avatarAnim.p3 = { type: 'bounce', life: 0.6 };
+        avatarAnim.p2 = { type: 'shake', life: 0.6 };
         const humanWins = state.gameMode === 'coop' ? 'Spieler-Team' : 'Spieler 1';
         if (p1.score >= WIN_SCORE) { state.over = true; state.winner = humanWins; sound.win(); spawnWinParticles(); }
-        else { sound.score(); resetBall(-1); initObstacles(); powerUps.length = 0; clearEffects(); }
+        else { sound.score(); resetBall(state.gameMode === 'duo' ? -1 : 1); initObstacles(); powerUps.length = 0; clearEffects(); }
       }
     }
 
@@ -1325,9 +1380,119 @@
       drawOutlinedText(hint, W/2, H - 14, 13, C.textGray, 'transparent');
     }
 
+    // ── Draw VS intro screen ──────────────────────────────────────────────────
+    function drawVSScreen() {
+      drawBackground();
+
+      // Dark overlay
+      ctx.fillStyle = 'rgba(10,5,25,0.7)';
+      ctx.fillRect(0, 0, W, H);
+
+      const isCoop = state.gameMode === 'coop';
+
+      // Slide-in progress: fast 0.6s slide from start of timer
+      const elapsed = 2.0 - state.vsTimer;
+      const progress = Math.min(1, elapsed / 0.6);
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+      // Left side: p1 (+ p3 in coop stacked)
+      const leftFinalX = W / 4;
+      const leftStartX = -80;
+      const leftX = leftStartX + (leftFinalX - leftStartX) * easedProgress;
+
+      // Right side: p2/bot
+      const rightFinalX = 3 * W / 4;
+      const rightStartX = W + 80;
+      const rightX = rightStartX + (rightFinalX - rightStartX) * easedProgress;
+
+      const avatarSize = 70;
+
+      // Draw left avatar(s)
+      if (isCoop) {
+        // p1 above center, p3 below
+        const p1y = H / 2 - 45;
+        const p3y = H / 2 + 45;
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.beginPath(); ctx.arc(leftX, H/2, 85, 0, Math.PI * 2);
+        ctx.fillStyle = selectedBrawler.p1.color; ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+        // p1 portrait
+        ctx.save();
+        ctx.beginPath(); ctx.arc(leftX, p1y, 38, 0, Math.PI * 2);
+        ctx.clip();
+        drawBrawlerPortrait(selectedBrawler.p1, leftX, p1y, 38);
+        ctx.restore();
+        ctx.beginPath(); ctx.arc(leftX, p1y, 38, 0, Math.PI * 2);
+        ctx.strokeStyle = selectedBrawler.p1.color; ctx.lineWidth = 3; ctx.stroke();
+        // p3 portrait
+        ctx.save();
+        ctx.beginPath(); ctx.arc(leftX, p3y, 38, 0, Math.PI * 2);
+        ctx.clip();
+        drawBrawlerPortrait(selectedBrawler.p3, leftX, p3y, 38);
+        ctx.restore();
+        ctx.beginPath(); ctx.arc(leftX, p3y, 38, 0, Math.PI * 2);
+        ctx.strokeStyle = selectedBrawler.p3.color; ctx.lineWidth = 3; ctx.stroke();
+        // Labels
+        drawOutlinedText('SPIELER 1', leftX, H/2 - 95, 16, selectedBrawler.p1.color, '#000', 3);
+        drawOutlinedText(selectedBrawler.p1.name, leftX, p3y + 52, 13, selectedBrawler.p1.color, 'transparent');
+        drawOutlinedText(selectedBrawler.p3.name, leftX, p3y + 68, 13, selectedBrawler.p3.color, 'transparent');
+      } else {
+        // Single p1 avatar
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.beginPath(); ctx.arc(leftX, H/2, 85, 0, Math.PI * 2);
+        ctx.fillStyle = selectedBrawler.p1.color; ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+        ctx.save();
+        ctx.beginPath(); ctx.arc(leftX, H/2, avatarSize, 0, Math.PI * 2);
+        ctx.clip();
+        drawBrawlerPortrait(selectedBrawler.p1, leftX, H/2, avatarSize);
+        ctx.restore();
+        ctx.beginPath(); ctx.arc(leftX, H/2, avatarSize, 0, Math.PI * 2);
+        ctx.strokeStyle = selectedBrawler.p1.color; ctx.lineWidth = 4; ctx.stroke();
+        drawOutlinedText('SPIELER 1', leftX, H/2 - avatarSize - 14, 16, selectedBrawler.p1.color, '#000', 3);
+        drawOutlinedText(selectedBrawler.p1.name, leftX, H/2 + avatarSize + 18, 14, selectedBrawler.p1.color, 'transparent');
+      }
+
+      // Draw right avatar (p2/bot)
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      ctx.beginPath(); ctx.arc(rightX, H/2, 85, 0, Math.PI * 2);
+      ctx.fillStyle = selectedBrawler.p2.color; ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+      ctx.save();
+      ctx.beginPath(); ctx.arc(rightX, H/2, avatarSize, 0, Math.PI * 2);
+      ctx.clip();
+      drawBrawlerPortrait(selectedBrawler.p2, rightX, H/2, avatarSize);
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(rightX, H/2, avatarSize, 0, Math.PI * 2);
+      ctx.strokeStyle = selectedBrawler.p2.color; ctx.lineWidth = 4; ctx.stroke();
+      const rightLabel2 = state.gameMode === 'duo' ? 'SPIELER 2' : 'BOT';
+      drawOutlinedText(rightLabel2, rightX, H/2 - avatarSize - 14, 16, selectedBrawler.p2.color, '#000', 3);
+      drawOutlinedText(selectedBrawler.p2.name, rightX, H/2 + avatarSize + 18, 14, selectedBrawler.p2.color, 'transparent');
+
+      // VS text — appears with a pop scale when vsTimer < 1.5
+      let vsScale = 1;
+      if (state.vsTimer < 1.5) {
+        vsScale = 1 + 0.3 * Math.abs(Math.sin(state.vsTimer * Math.PI * 3));
+      }
+      ctx.save();
+      ctx.translate(W/2, H/2);
+      ctx.scale(vsScale, vsScale);
+      drawOutlinedText('VS!', 0, 0, 64, '#f5c400', '#000', 6);
+      ctx.restore();
+    }
+
     // ── Draw game ─────────────────────────────────────────────────────────────
     function draw() {
       if (state.mode === 'menu') { drawMenu(); return; }
+
+      // VS intro screen
+      if (state.vsTimer > 0) { drawVSScreen(); return; }
 
       ctx.save();
       ctx.translate(shake.x, shake.y);
@@ -1343,24 +1508,39 @@
       drawOutlinedText(rightLabel, 3*W/4,     84, 13, C.textGray, 'transparent');
 
       // Brawler avatars
-      function drawAvatar(brawler, cx, cy, r) {
+      function drawAvatar(brawler, cx, cy, r, animSide) {
+        const anim = animSide ? avatarAnim[animSide] : null;
+        ctx.save();
+        if (anim && anim.life > 0) {
+          const life = anim.life;
+          if (anim.type === 'bounce') {
+            const scale = 1 + 0.35 * Math.sin(life * Math.PI);
+            ctx.translate(cx, cy);
+            ctx.scale(scale, scale);
+            ctx.translate(-cx, -cy);
+          } else if (anim.type === 'shake') {
+            const offsetX = 6 * Math.sin(life * Math.PI * 8) * life;
+            ctx.translate(offsetX, 0);
+          }
+        }
         ctx.beginPath(); ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
         ctx.fillStyle = '#1b1035'; ctx.fill();
         drawBrawlerPortrait(brawler, cx, cy, r);
         ctx.beginPath(); ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
         ctx.strokeStyle = brawler.color; ctx.lineWidth = 2.5; ctx.stroke();
+        ctx.restore();
       }
 
       if (state.gameMode === 'coop') {
         // Two team avatars left of score, side by side
-        drawAvatar(selectedBrawler.p1, W/4 - 62, 52, 22);
-        drawAvatar(selectedBrawler.p3, W/4 - 30, 52, 22);
+        drawAvatar(selectedBrawler.p1, W/4 - 62, 52, 22, 'p1');
+        drawAvatar(selectedBrawler.p3, W/4 - 30, 52, 22, 'p3');
         // Small "+" between them
         drawOutlinedText('+', W/4 - 46, 78, 10, C.textGray, 'transparent');
       } else {
-        drawAvatar(selectedBrawler.p1, W/4 - 52, 52, 26);
+        drawAvatar(selectedBrawler.p1, W/4 - 52, 52, 26, 'p1');
       }
-      drawAvatar(selectedBrawler.p2, 3*W/4 + 52, 52, 26);
+      drawAvatar(selectedBrawler.p2, 3*W/4 + 52, 52, 26, 'p2');
 
       // Paddles
       const p1x = 20;
@@ -1413,6 +1593,23 @@
       ctx.shadowBlur = 18;
       drawGem(ball.x, ball.y, BALL_SIZE / 2 + 2);
       ctx.shadowBlur = 0;
+
+      // Serve hint
+      if (state.serving && state.vsTimer === 0) {
+        const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 220);
+        // Pulsing ring around ball
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, BALL_SIZE + 6 * pulse, 0, Math.PI * 2);
+        ctx.strokeStyle = C.accent;
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = pulse * 0.6;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        // Hint text above ball
+        ctx.globalAlpha = pulse;
+        drawOutlinedText('SPACE: Aufschlag', ball.x, ball.y - 28, 16, C.accent, '#000', 3);
+        ctx.globalAlpha = 1;
+      }
 
       // Score flash ring
       if (scoreFlash.active) {
@@ -1546,16 +1743,71 @@
       if (state.over) {
         ctx.fillStyle = 'rgba(10,5,25,0.72)';
         ctx.fillRect(0, 0, W, H);
-        // Glowing panel
+        // Glowing panel (taller to fit portrait)
         ctx.shadowColor = C.accent;
         ctx.shadowBlur = 30;
-        drawRoundedRect(W/2 - 240, H/2 - 90, 480, 175, 18, '#1b1035', C.accent, 5);
+        drawRoundedRect(W/2 - 240, H/2 - 155, 480, 245, 18, '#1b1035', C.accent, 5);
         ctx.shadowBlur = 0;
-        // Stars beside text
-        drawStar(W/2 - 190, H/2 - 30, 20, C.accent, '#7a5200', 2);
-        drawStar(W/2 + 190, H/2 - 30, 20, C.accent, '#7a5200', 2);
-        drawOutlinedText(`${state.winner} gewinnt!`, W/2, H/2 - 14, 42, C.accent, '#000', 5);
-        drawOutlinedText('ENTER: Nochmal  •  ESC: Menü', W/2, H/2 + 44, 18, C.textGray, 'transparent');
+
+        // Determine winner brawler(s)
+        const isTeamWin = state.winner && state.winner.includes('Team');
+        const isBotWin  = state.winner && state.winner.includes('Bot');
+        const winBrawler = isBotWin ? selectedBrawler.p2 : selectedBrawler.p1;
+
+        // Portrait center position
+        const portraitCx = W / 2;
+        const portraitCy = H / 2 - 110;
+        const portraitR  = 70;
+
+        if (isTeamWin) {
+          // Show p1 and p3 side by side
+          const brawlers = [selectedBrawler.p1, selectedBrawler.p3];
+          const offsets  = [-45, 45];
+          brawlers.forEach((b, idx) => {
+            const pcx = portraitCx + offsets[idx];
+            ctx.save();
+            ctx.globalAlpha = 0.2;
+            ctx.beginPath(); ctx.arc(pcx, portraitCy, 55, 0, Math.PI * 2);
+            ctx.fillStyle = b.color; ctx.fill();
+            ctx.globalAlpha = 1;
+            ctx.restore();
+            ctx.save();
+            ctx.beginPath(); ctx.arc(pcx, portraitCy, 38, 0, Math.PI * 2);
+            ctx.clip();
+            drawBrawlerPortrait(b, pcx, portraitCy, 38);
+            ctx.restore();
+            ctx.beginPath(); ctx.arc(pcx, portraitCy, 38, 0, Math.PI * 2);
+            ctx.strokeStyle = b.color; ctx.lineWidth = 4; ctx.stroke();
+            const starAngles = [0, Math.PI/2, Math.PI, 3*Math.PI/2];
+            starAngles.forEach(a => drawStar(pcx + Math.cos(a)*55, portraitCy + Math.sin(a)*55, 7, C.accent, '#7a5200', 1.5));
+          });
+        } else {
+          // Glowing circle background
+          ctx.save();
+          ctx.globalAlpha = 0.2;
+          ctx.beginPath(); ctx.arc(portraitCx, portraitCy, 80, 0, Math.PI * 2);
+          ctx.fillStyle = winBrawler.color; ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.restore();
+          // Portrait clipped to circle
+          ctx.save();
+          ctx.beginPath(); ctx.arc(portraitCx, portraitCy, portraitR, 0, Math.PI * 2);
+          ctx.clip();
+          drawBrawlerPortrait(winBrawler, portraitCx, portraitCy, portraitR);
+          ctx.restore();
+          // Colored stroke ring
+          ctx.beginPath(); ctx.arc(portraitCx, portraitCy, portraitR, 0, Math.PI * 2);
+          ctx.strokeStyle = winBrawler.color; ctx.lineWidth = 4; ctx.stroke();
+          // 4 stars at compass positions
+          const starAngles = [0, Math.PI/2, Math.PI, 3*Math.PI/2];
+          starAngles.forEach(a => drawStar(portraitCx + Math.cos(a)*95, portraitCy + Math.sin(a)*95, 10, C.accent, '#7a5200', 2));
+        }
+
+        // Win text shifted down ~60px
+        drawStar(W/2 - 190, H/2 + 30, 20, C.accent, '#7a5200', 2);
+        drawStar(W/2 + 190, H/2 + 30, 20, C.accent, '#7a5200', 2);
+        drawOutlinedText(`${state.winner} gewinnt!`, W/2, H/2 + 46, 42, C.accent, '#000', 5);
+        drawOutlinedText('ENTER: Nochmal  •  ESC: Menü', W/2, H/2 + 104, 18, C.textGray, 'transparent');
       } else if (state.paused) {
         ctx.fillStyle = 'rgba(10,5,25,0.72)';
         ctx.fillRect(0, 0, W, H);
@@ -1624,7 +1876,11 @@
         return;
       }
 
-      if (e.key === 'Escape') { state.mode = 'menu'; state.menuPage = 'mode'; brawlerTurn = 'p1'; infoEl.textContent = ''; return; }
+      if (e.key === 'Escape') { state.mode = 'menu'; state.menuPage = 'mode'; state.vsTimer = 0; brawlerTurn = 'p1'; infoEl.textContent = ''; return; }
+      if (e.key === ' ') {
+        if (state.serving && state.vsTimer === 0) { serveBall(); e.preventDefault(); }
+        return;
+      }
       if (e.key === 'Enter') {
         if (state.over) startGame(); else state.paused = !state.paused;
         return;
