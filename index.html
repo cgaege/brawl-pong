@@ -172,6 +172,265 @@
       starBg:      '#ffffff',
     };
 
+    // ── Brawler draw functions ────────────────────────────────────────────────
+
+    function drawShelly(ctx, cx, cy, size) {
+      ctx.save();
+      const s = size;
+      // Background circle
+      ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2);
+      ctx.fillStyle = '#e8608a'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Face
+      ctx.beginPath(); ctx.arc(cx, cy + s * 0.05, s * 0.68, 0, Math.PI * 2);
+      ctx.fillStyle = '#f0c090'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Hair (top arc, brown)
+      ctx.beginPath(); ctx.arc(cx, cy - s * 0.1, s * 0.68, Math.PI, 0);
+      ctx.fillStyle = '#6b3a2a'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 1.5; ctx.stroke();
+      // Eyes
+      ctx.fillStyle = '#1a0a0a';
+      ctx.beginPath(); ctx.arc(cx - s * 0.22, cy, s * 0.09, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.22, cy, s * 0.09, 0, Math.PI * 2); ctx.fill();
+      // Pink cheeks
+      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = '#ff80a0';
+      ctx.beginPath(); ctx.arc(cx - s * 0.35, cy + s * 0.12, s * 0.16, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.35, cy + s * 0.12, s * 0.16, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      // Smile
+      ctx.beginPath();
+      ctx.arc(cx, cy + s * 0.15, s * 0.22, 0.15, Math.PI - 0.15);
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawColt(ctx, cx, cy, size) {
+      ctx.save();
+      const s = size;
+      // Background circle
+      ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2);
+      ctx.fillStyle = '#2255aa'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Sheriff hat (blue, wide brim)
+      ctx.fillStyle = '#2255aa';
+      ctx.beginPath();
+      ctx.rect(cx - s * 0.52, cy - s * 0.55, s * 1.04, s * 0.18); // brim
+      ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.beginPath();
+      ctx.rect(cx - s * 0.35, cy - s * 0.88, s * 0.7, s * 0.38); // crown
+      ctx.fillStyle = '#1a3e8a'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Hat band
+      ctx.fillStyle = '#f5c400';
+      ctx.fillRect(cx - s * 0.35, cy - s * 0.58, s * 0.7, s * 0.1);
+      // Face
+      ctx.beginPath(); ctx.arc(cx, cy + s * 0.1, s * 0.6, 0, Math.PI * 2);
+      ctx.fillStyle = '#f5d5a0'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Blonde hair sides
+      ctx.fillStyle = '#d4a800';
+      ctx.beginPath(); ctx.arc(cx - s * 0.52, cy + s * 0.05, s * 0.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.52, cy + s * 0.05, s * 0.2, 0, Math.PI * 2); ctx.fill();
+      // Determined eyes (angular)
+      ctx.fillStyle = '#1a0a0a';
+      ctx.beginPath(); ctx.arc(cx - s * 0.2, cy + s * 0.05, s * 0.09, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.2, cy + s * 0.05, s * 0.09, 0, Math.PI * 2); ctx.fill();
+      // Eyebrows (straight, determined)
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(cx - s * 0.31, cy - s * 0.1); ctx.lineTo(cx - s * 0.1, cy - s * 0.08); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + s * 0.31, cy - s * 0.1); ctx.lineTo(cx + s * 0.1, cy - s * 0.08); ctx.stroke();
+      // Mouth (thin line)
+      ctx.beginPath(); ctx.moveTo(cx - s * 0.15, cy + s * 0.25); ctx.lineTo(cx + s * 0.15, cy + s * 0.25);
+      ctx.lineWidth = 2; ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBull(ctx, cx, cy, size) {
+      ctx.save();
+      const s = size;
+      // Background circle
+      ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2);
+      ctx.fillStyle = '#cc3333'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Horns (dark, curved)
+      ctx.fillStyle = '#3a2010';
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.3, cy - s * 0.55);
+      ctx.bezierCurveTo(cx - s * 0.55, cy - s * 0.9, cx - s * 0.75, cy - s * 0.75, cx - s * 0.6, cy - s * 0.5);
+      ctx.bezierCurveTo(cx - s * 0.45, cy - s * 0.55, cx - s * 0.4, cy - s * 0.5, cx - s * 0.3, cy - s * 0.55);
+      ctx.fill(); ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + s * 0.3, cy - s * 0.55);
+      ctx.bezierCurveTo(cx + s * 0.55, cy - s * 0.9, cx + s * 0.75, cy - s * 0.75, cx + s * 0.6, cy - s * 0.5);
+      ctx.bezierCurveTo(cx + s * 0.45, cy - s * 0.55, cx + s * 0.4, cy - s * 0.5, cx + s * 0.3, cy - s * 0.55);
+      ctx.fill(); ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 1.5; ctx.stroke();
+      // Wide round face
+      ctx.beginPath(); ctx.arc(cx, cy + s * 0.05, s * 0.72, 0, Math.PI * 2);
+      ctx.fillStyle = '#cc3333'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Angry eyebrows
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(cx - s * 0.38, cy - s * 0.22); ctx.lineTo(cx - s * 0.12, cy - s * 0.1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + s * 0.38, cy - s * 0.22); ctx.lineTo(cx + s * 0.12, cy - s * 0.1); ctx.stroke();
+      // Eyes (small, mean)
+      ctx.fillStyle = '#1a0a0a';
+      ctx.beginPath(); ctx.arc(cx - s * 0.22, cy, s * 0.1, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.22, cy, s * 0.1, 0, Math.PI * 2); ctx.fill();
+      // Nose ring (silver circle)
+      ctx.beginPath(); ctx.arc(cx, cy + s * 0.28, s * 0.13, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fill();
+      ctx.strokeStyle = '#c0c0c0'; ctx.lineWidth = 3; ctx.stroke();
+      // Nostrils
+      ctx.fillStyle = '#882222';
+      ctx.beginPath(); ctx.arc(cx - s * 0.08, cy + s * 0.28, s * 0.06, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.08, cy + s * 0.28, s * 0.06, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    function drawSpike(ctx, cx, cy, size) {
+      ctx.save();
+      const s = size;
+      // Background circle
+      ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2);
+      ctx.fillStyle = '#4a9a3a'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Spikes (small triangles around the head)
+      ctx.fillStyle = '#3a7a2a';
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 1.5;
+      const spikeCount = 8;
+      const headR = s * 0.62;
+      for (let i = 0; i < spikeCount; i++) {
+        const angle = (Math.PI * 2 / spikeCount) * i - Math.PI / 2;
+        const tx = cx + Math.cos(angle) * (headR + s * 0.22);
+        const ty = cy + Math.sin(angle) * (headR + s * 0.22);
+        const l = cx + Math.cos(angle) * headR;
+        const r2 = cy + Math.sin(angle) * headR;
+        const perpX = Math.cos(angle + Math.PI / 2) * s * 0.1;
+        const perpY = Math.sin(angle + Math.PI / 2) * s * 0.1;
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(l + perpX, r2 + perpY);
+        ctx.lineTo(l - perpX, r2 - perpY);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      }
+      // Green head
+      ctx.beginPath(); ctx.arc(cx, cy, headR, 0, Math.PI * 2);
+      ctx.fillStyle = '#4a9a3a'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Dot eyes
+      ctx.fillStyle = '#1a0a0a';
+      ctx.beginPath(); ctx.arc(cx - s * 0.2, cy - s * 0.08, s * 0.1, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.2, cy - s * 0.08, s * 0.1, 0, Math.PI * 2); ctx.fill();
+      // Rosy cheeks
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = '#ff6080';
+      ctx.beginPath(); ctx.arc(cx - s * 0.32, cy + s * 0.12, s * 0.14, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.32, cy + s * 0.12, s * 0.14, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      // Smile
+      ctx.beginPath();
+      ctx.arc(cx, cy + s * 0.12, s * 0.18, 0.2, Math.PI - 0.2);
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBrock(ctx, cx, cy, size) {
+      ctx.save();
+      const s = size;
+      // Background circle
+      ctx.beginPath(); ctx.arc(cx, cy, s, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff6600'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Face (tall oval)
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + s * 0.05, s * 0.55, s * 0.65, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#fde8c8'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      // Spiky orange hair
+      ctx.fillStyle = '#ff6600';
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 1.5;
+      const spikes = [[-0.35, -0.7], [-0.15, -0.85], [0, -0.9], [0.15, -0.85], [0.35, -0.7]];
+      spikes.forEach(([ox, oy]) => {
+        ctx.beginPath();
+        ctx.moveTo(cx + ox * s, cy + oy * s);
+        ctx.lineTo(cx + (ox - 0.12) * s, cy + (oy + 0.25) * s);
+        ctx.lineTo(cx + (ox + 0.12) * s, cy + (oy + 0.25) * s);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      });
+      // Hair base (orange arc covering top)
+      ctx.beginPath();
+      ctx.arc(cx, cy - s * 0.15, s * 0.55, Math.PI, 0);
+      ctx.fillStyle = '#ff6600'; ctx.fill();
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 1.5; ctx.stroke();
+      // Sunglasses (dark rect across eyes)
+      const glassY = cy - s * 0.1;
+      ctx.fillStyle = '#111';
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2;
+      // Left lens
+      ctx.beginPath();
+      ctx.rect(cx - s * 0.48, glassY - s * 0.13, s * 0.38, s * 0.24);
+      ctx.fill(); ctx.stroke();
+      // Right lens
+      ctx.beginPath();
+      ctx.rect(cx + s * 0.1, glassY - s * 0.13, s * 0.38, s * 0.24);
+      ctx.fill(); ctx.stroke();
+      // Bridge
+      ctx.beginPath(); ctx.moveTo(cx - s * 0.1, glassY); ctx.lineTo(cx + s * 0.1, glassY);
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 2.5; ctx.stroke();
+      // Shine on glasses
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(cx - s * 0.44, glassY - s * 0.11, s * 0.14, s * 0.09);
+      ctx.fillRect(cx + s * 0.14, glassY - s * 0.11, s * 0.14, s * 0.09);
+      ctx.globalAlpha = 1;
+      // Mouth (cool smirk)
+      ctx.beginPath();
+      ctx.arc(cx + s * 0.1, cy + s * 0.3, s * 0.18, Math.PI + 0.3, Math.PI * 2 - 0.1);
+      ctx.strokeStyle = '#1a0a0a'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.restore();
+    }
+
+    // ── Brawler selection data ────────────────────────────────────────────────
+    const CDN = 'https://cdn.brawlify.com/brawlers/borderless';
+    const BRAWLERS = [
+      { id: 'shelly', name: 'Shelly', color: '#e8608a', imgId: 16000000, fallback: drawShelly },
+      { id: 'colt',   name: 'Colt',   color: '#2255aa', imgId: 16000001, fallback: drawColt   },
+      { id: 'bull',   name: 'Bull',   color: '#cc3333', imgId: 16000002, fallback: drawBull   },
+      { id: 'brock',  name: 'Brock',  color: '#ff6600', imgId: 16000003, fallback: drawBrock  },
+      { id: 'spike',  name: 'Spike',  color: '#4a9a3a', imgId: 16000005, fallback: drawSpike  },
+    ];
+
+    // Preload all brawler images
+    BRAWLERS.forEach(b => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = `${CDN}/${b.imgId}.png`;
+      b.img = img;
+    });
+
+    // Draw brawler portrait — image if loaded, fallback to canvas drawing
+    function drawBrawlerPortrait(brawler, cx, cy, size) {
+      if (brawler.img?.complete && brawler.img.naturalWidth > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, size, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(brawler.img, cx - size, cy - size, size * 2, size * 2);
+        ctx.restore();
+      } else {
+        brawler.fallback(ctx, cx, cy, size);
+      }
+    }
+
+    let selectedBrawler = { p1: BRAWLERS[0], p2: BRAWLERS[1], p3: BRAWLERS[2] };
+    let brawlerCursor = { p1: 0, p2: 1, p3: 2 };
+    let brawlerTurn = 'p1'; // 'p1' | 'p2' | 'p3' — whose turn it is to pick
+
     // ── Sound ─────────────────────────────────────────────────────────────────
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -215,7 +474,14 @@
     };
 
     // ── State ─────────────────────────────────────────────────────────────────
-    const state = { mode: 'menu', paused: false, over: false, winner: null, gameMode: 'solo' };
+    const state = { mode: 'menu', menuPage: 'mode', paused: false, over: false, winner: null, gameMode: 'solo', vsTimer: 0, serving: false, serveDirection: 1 };
+
+    // Avatar reaction animation state
+    const avatarAnim = {
+      p1: { type: null, life: 0 },
+      p2: { type: null, life: 0 },
+      p3: { type: null, life: 0 },
+    };
 
     const DIFFICULTIES = {
       leicht: { speed: 2.8, errorMargin: 55, predictionNoise: 3 },
@@ -456,14 +722,34 @@
 
     function resetBall(direction = 1) {
       ball.x = W / 2; ball.y = H / 2;
+      ball.vx = 0; ball.vy = 0;
       botTarget = H / 2;
       botError = (Math.random() * 2 - 1) * DIFFICULTIES[difficulty].errorMargin;
+      state.serving = true;
+      state.serveDirection = direction;
+    }
+
+    function serveBall() {
       const angle = (Math.random() * 60 - 30) * (Math.PI / 180);
-      ball.vx = direction * ball.speed * Math.cos(angle);
+      ball.vx = state.serveDirection * ball.speed * Math.cos(angle);
       ball.vy = ball.speed * Math.sin(angle);
+      state.serving = false;
     }
 
     function startGame() {
+      // Assign brawlers from selection; bot gets random brawler in solo/coop
+      selectedBrawler.p1 = BRAWLERS[brawlerCursor.p1];
+      if (state.gameMode === 'duo') {
+        selectedBrawler.p2 = BRAWLERS[brawlerCursor.p2];
+      } else if (state.gameMode === 'coop') {
+        selectedBrawler.p3 = BRAWLERS[brawlerCursor.p3];
+        const botOptions = BRAWLERS.filter(b => b.id !== selectedBrawler.p1.id && b.id !== selectedBrawler.p3.id);
+        selectedBrawler.p2 = botOptions[Math.floor(Math.random() * botOptions.length)];
+      } else {
+        const botOptions = BRAWLERS.filter(b => b.id !== selectedBrawler.p1.id);
+        selectedBrawler.p2 = botOptions[Math.floor(Math.random() * botOptions.length)];
+      }
+
       p1.score = 0; p2.score = 0;
       if (state.gameMode === 'coop') {
         p1.y = H / 2 - COOP_PADDLE_H - 5;
@@ -485,7 +771,11 @@
       initObstacles();
       state.over = false; state.winner = null; state.paused = false;
       state.mode = 'playing';
-      resetBall(Math.random() < 0.5 ? 1 : -1);
+      state.vsTimer = 2.0;
+      avatarAnim.p1 = { type: null, life: 0 };
+      avatarAnim.p2 = { type: null, life: 0 };
+      avatarAnim.p3 = { type: null, life: 0 };
+      resetBall(state.gameMode === 'duo' ? (Math.random() < 0.5 ? 1 : -1) : 1);
       updateInfo();
     }
 
@@ -559,6 +849,20 @@
     function update() {
       if (state.mode !== 'playing' || state.paused || state.over) return;
 
+      const dt = 1 / 60;
+
+      // VS intro timer — block game logic while it counts down
+      if (state.vsTimer > 0) {
+        state.vsTimer -= dt;
+        if (state.vsTimer < 0) state.vsTimer = 0;
+        return;
+      }
+
+      // Tick avatar animations
+      for (const side of ['p1', 'p2', 'p3']) {
+        if (avatarAnim[side].life > 0) avatarAnim[side].life -= dt;
+      }
+
       const isCoop = state.gameMode === 'coop';
 
       const sp1 = effectiveSpeed(PADDLE_SPEED, 'p1');
@@ -579,6 +883,22 @@
         if (p3.up)   p3.y -= sp1;
         if (p3.down) p3.y += sp1;
         clampPaddle(p3);
+      }
+
+      // Ball sticks to serving paddle
+      if (state.serving) {
+        const p1x = 20;
+        const p2x = W - 20 - PADDLE_W;
+        if (state.serveDirection === 1) {
+          // p1 serves — ball sticks to right edge of p1's paddle, follows its center
+          ball.x = p1x + PADDLE_W + BALL_SIZE / 2 + 2;
+          ball.y = p1.y + effectivePaddleH(p1, 'p1') / 2;
+        } else {
+          // p2 serves — ball sticks to left edge of p2's paddle
+          ball.x = p2x - BALL_SIZE / 2 - 2;
+          ball.y = p2.y + PADDLE_H / 2;
+        }
+        return;
       }
 
       // Ball trail
@@ -653,7 +973,6 @@
       }
 
       // Tick active effects
-      const dt = 1 / 60;
       for (const side of ['p1', 'p2']) {
         if (effects[side]) {
           effects[side].timeLeft -= dt;
@@ -684,6 +1003,10 @@
         trail.length = 0;
         scoreFlash = { active: true, x: 3*W/4, y: H/2, life: 1, color: '#ff6060' };
         spawnGoalEffect(20, ball.y, '#ff6060', 3*W/4);
+        // Avatar reactions: p2 scores → p2 bounces, p1 (and p3 in coop) shakes
+        avatarAnim.p2 = { type: 'bounce', life: 0.6 };
+        avatarAnim.p1 = { type: 'shake', life: 0.6 };
+        if (state.gameMode === 'coop') avatarAnim.p3 = { type: 'shake', life: 0.6 };
         const botWins = state.gameMode === 'duo' ? 'Spieler 2' : 'Bot';
         if (p2.score >= WIN_SCORE) { state.over = true; state.winner = botWins; sound.win(); spawnWinParticles(); }
         else { sound.score(); resetBall(1); initObstacles(); powerUps.length = 0; clearEffects(); }
@@ -694,9 +1017,13 @@
         trail.length = 0;
         scoreFlash = { active: true, x: W/4, y: H/2, life: 1, color: C.accent };
         spawnGoalEffect(W - 20, ball.y, C.accent, W/4);
+        // Avatar reactions: p1 (and p3 in coop) bounce, p2 shakes
+        avatarAnim.p1 = { type: 'bounce', life: 0.6 };
+        if (state.gameMode === 'coop') avatarAnim.p3 = { type: 'bounce', life: 0.6 };
+        avatarAnim.p2 = { type: 'shake', life: 0.6 };
         const humanWins = state.gameMode === 'coop' ? 'Spieler-Team' : 'Spieler 1';
         if (p1.score >= WIN_SCORE) { state.over = true; state.winner = humanWins; sound.win(); spawnWinParticles(); }
-        else { sound.score(); resetBall(-1); initObstacles(); powerUps.length = 0; clearEffects(); }
+        else { sound.score(); resetBall(state.gameMode === 'duo' ? -1 : 1); initObstacles(); powerUps.length = 0; clearEffects(); }
       }
     }
 
@@ -948,6 +1275,8 @@
     ];
 
     function drawMenu() {
+      if (state.menuPage === 'brawlers') { drawBrawlerSelect(); return; }
+
       drawBackground();
 
       // Title
@@ -988,13 +1317,182 @@
         });
       }
 
-      drawOutlinedText('ENTER: START  •  ↑/↓: MODUS  •  ←/→: SCHWIERIGKEIT',
+      drawOutlinedText('ENTER: WEITER  •  ↑/↓: MODUS  •  ←/→: SCHWIERIGKEIT',
         W/2, H - 14, 13, C.textGray, 'transparent');
+    }
+
+    function drawBrawlerSelect() {
+      drawBackground();
+      ctx.fillStyle = 'rgba(10,5,25,0.55)';
+      ctx.fillRect(0, 0, W, H);
+
+      const isDuo  = state.gameMode === 'duo';
+      const isCoop = state.gameMode === 'coop';
+      const activeTurn   = brawlerTurn;
+      const activeCursor = brawlerCursor[activeTurn];
+      const activeColor  = activeTurn === 'p1' ? C.accent : activeTurn === 'p3' ? C.coopP3 : C.paddle2;
+      const activeLabel  = activeTurn === 'p1' ? 'SPIELER 1' : activeTurn === 'p3' ? 'SPIELER 2 (Co-Op)' : 'SPIELER 2';
+
+      // Title shows whose turn it is
+      drawOutlinedText(`${activeLabel}: WÄHLE DEINEN BRAWLER`, W/2, 42, 24, activeColor, '#000', 4);
+
+      // Cards — always ←/→ for active player, centered
+      const cardW = 110, cardH = 130, cardSpacing = 120;
+      const totalW = BRAWLERS.length * cardSpacing - (cardSpacing - cardW);
+      const startX = W / 2 - totalW / 2 + cardW / 2;
+
+      BRAWLERS.forEach((brawler, i) => {
+        const cardX = startX + i * cardSpacing;
+        const cardY = 72;
+        const isSelected = i === activeCursor;
+
+        const cardFill   = isSelected ? `rgba(${activeColor === C.accent ? '245,196,0' : '232,64,64'},0.2)` : 'rgba(30,15,70,0.75)';
+        const cardBorder = isSelected ? activeColor : '#4a2d8a';
+        if (isSelected) { ctx.shadowColor = activeColor; ctx.shadowBlur = 16; }
+        drawRoundedRect(cardX - cardW/2, cardY, cardW, cardH, 12, cardFill, cardBorder, isSelected ? 3 : 1.5);
+        ctx.shadowBlur = 0;
+
+        drawBrawlerPortrait(brawler, cardX, cardY + 58, 40);
+        drawOutlinedText(brawler.name, cardX, cardY + cardH - 10, 14,
+          isSelected ? activeColor : C.textGray, 'transparent');
+
+        if (isSelected) drawOutlinedText('▼', cardX, cardY - 8, 16, activeColor, '#000', 2);
+      });
+
+      // Show confirmed P1 portrait top-left when it's the second player's turn
+      if ((isDuo || isCoop) && activeTurn !== 'p1') {
+        const confirmed = BRAWLERS[brawlerCursor.p1];
+        drawOutlinedText('S1:', 46, 82, 13, C.accent, 'transparent');
+        ctx.save();
+        ctx.beginPath(); ctx.arc(80, 92, 22, 0, Math.PI * 2);
+        ctx.fillStyle = '#1b1035'; ctx.fill();
+        ctx.strokeStyle = C.accent; ctx.lineWidth = 2; ctx.stroke();
+        ctx.restore();
+        drawBrawlerPortrait(confirmed, 80, 92, 20);
+        drawOutlinedText(confirmed.name, 80, 120, 11, C.accent, 'transparent');
+      }
+
+      // Hint
+      const isFirstTurn = activeTurn === 'p1';
+      const hint = isFirstTurn
+        ? '←/→: Brawler  •  ENTER: Bestätigen  •  ESC: Zurück'
+        : '←/→: Brawler  •  ENTER: Spielen  •  ESC: Zurück zu S1';
+      drawOutlinedText(hint, W/2, H - 14, 13, C.textGray, 'transparent');
+    }
+
+    // ── Draw VS intro screen ──────────────────────────────────────────────────
+    function drawVSScreen() {
+      drawBackground();
+
+      // Dark overlay
+      ctx.fillStyle = 'rgba(10,5,25,0.7)';
+      ctx.fillRect(0, 0, W, H);
+
+      const isCoop = state.gameMode === 'coop';
+
+      // Slide-in progress: fast 0.6s slide from start of timer
+      const elapsed = 2.0 - state.vsTimer;
+      const progress = Math.min(1, elapsed / 0.6);
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+      // Left side: p1 (+ p3 in coop stacked)
+      const leftFinalX = W / 4;
+      const leftStartX = -80;
+      const leftX = leftStartX + (leftFinalX - leftStartX) * easedProgress;
+
+      // Right side: p2/bot
+      const rightFinalX = 3 * W / 4;
+      const rightStartX = W + 80;
+      const rightX = rightStartX + (rightFinalX - rightStartX) * easedProgress;
+
+      const avatarSize = 70;
+
+      // Draw left avatar(s)
+      if (isCoop) {
+        // p1 above center, p3 below
+        const p1y = H / 2 - 45;
+        const p3y = H / 2 + 45;
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.beginPath(); ctx.arc(leftX, H/2, 85, 0, Math.PI * 2);
+        ctx.fillStyle = selectedBrawler.p1.color; ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+        // p1 portrait
+        ctx.save();
+        ctx.beginPath(); ctx.arc(leftX, p1y, 38, 0, Math.PI * 2);
+        ctx.clip();
+        drawBrawlerPortrait(selectedBrawler.p1, leftX, p1y, 38);
+        ctx.restore();
+        ctx.beginPath(); ctx.arc(leftX, p1y, 38, 0, Math.PI * 2);
+        ctx.strokeStyle = selectedBrawler.p1.color; ctx.lineWidth = 3; ctx.stroke();
+        // p3 portrait
+        ctx.save();
+        ctx.beginPath(); ctx.arc(leftX, p3y, 38, 0, Math.PI * 2);
+        ctx.clip();
+        drawBrawlerPortrait(selectedBrawler.p3, leftX, p3y, 38);
+        ctx.restore();
+        ctx.beginPath(); ctx.arc(leftX, p3y, 38, 0, Math.PI * 2);
+        ctx.strokeStyle = selectedBrawler.p3.color; ctx.lineWidth = 3; ctx.stroke();
+        // Labels
+        drawOutlinedText('SPIELER 1', leftX, H/2 - 95, 16, selectedBrawler.p1.color, '#000', 3);
+        drawOutlinedText(selectedBrawler.p1.name, leftX, p3y + 52, 13, selectedBrawler.p1.color, 'transparent');
+        drawOutlinedText(selectedBrawler.p3.name, leftX, p3y + 68, 13, selectedBrawler.p3.color, 'transparent');
+      } else {
+        // Single p1 avatar
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.beginPath(); ctx.arc(leftX, H/2, 85, 0, Math.PI * 2);
+        ctx.fillStyle = selectedBrawler.p1.color; ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+        ctx.save();
+        ctx.beginPath(); ctx.arc(leftX, H/2, avatarSize, 0, Math.PI * 2);
+        ctx.clip();
+        drawBrawlerPortrait(selectedBrawler.p1, leftX, H/2, avatarSize);
+        ctx.restore();
+        ctx.beginPath(); ctx.arc(leftX, H/2, avatarSize, 0, Math.PI * 2);
+        ctx.strokeStyle = selectedBrawler.p1.color; ctx.lineWidth = 4; ctx.stroke();
+        drawOutlinedText('SPIELER 1', leftX, H/2 - avatarSize - 14, 16, selectedBrawler.p1.color, '#000', 3);
+        drawOutlinedText(selectedBrawler.p1.name, leftX, H/2 + avatarSize + 18, 14, selectedBrawler.p1.color, 'transparent');
+      }
+
+      // Draw right avatar (p2/bot)
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      ctx.beginPath(); ctx.arc(rightX, H/2, 85, 0, Math.PI * 2);
+      ctx.fillStyle = selectedBrawler.p2.color; ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+      ctx.save();
+      ctx.beginPath(); ctx.arc(rightX, H/2, avatarSize, 0, Math.PI * 2);
+      ctx.clip();
+      drawBrawlerPortrait(selectedBrawler.p2, rightX, H/2, avatarSize);
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(rightX, H/2, avatarSize, 0, Math.PI * 2);
+      ctx.strokeStyle = selectedBrawler.p2.color; ctx.lineWidth = 4; ctx.stroke();
+      const rightLabel2 = state.gameMode === 'duo' ? 'SPIELER 2' : 'BOT';
+      drawOutlinedText(rightLabel2, rightX, H/2 - avatarSize - 14, 16, selectedBrawler.p2.color, '#000', 3);
+      drawOutlinedText(selectedBrawler.p2.name, rightX, H/2 + avatarSize + 18, 14, selectedBrawler.p2.color, 'transparent');
+
+      // VS text — appears with a pop scale when vsTimer < 1.5
+      let vsScale = 1;
+      if (state.vsTimer < 1.5) {
+        vsScale = 1 + 0.3 * Math.abs(Math.sin(state.vsTimer * Math.PI * 3));
+      }
+      ctx.save();
+      ctx.translate(W/2, H/2);
+      ctx.scale(vsScale, vsScale);
+      drawOutlinedText('VS!', 0, 0, 64, '#f5c400', '#000', 6);
+      ctx.restore();
     }
 
     // ── Draw game ─────────────────────────────────────────────────────────────
     function draw() {
       if (state.mode === 'menu') { drawMenu(); return; }
+
+      // VS intro screen
+      if (state.vsTimer > 0) { drawVSScreen(); return; }
 
       ctx.save();
       ctx.translate(shake.x, shake.y);
@@ -1008,6 +1506,41 @@
       drawOutlinedText(String(p2.score), 3*W/4,     62, 52, '#ffffff', '#000', 5);
       drawOutlinedText(leftLabel,  W/4,       84, 13, C.textGray, 'transparent');
       drawOutlinedText(rightLabel, 3*W/4,     84, 13, C.textGray, 'transparent');
+
+      // Brawler avatars
+      function drawAvatar(brawler, cx, cy, r, animSide) {
+        const anim = animSide ? avatarAnim[animSide] : null;
+        ctx.save();
+        if (anim && anim.life > 0) {
+          const life = anim.life;
+          if (anim.type === 'bounce') {
+            const scale = 1 + 0.35 * Math.sin(life * Math.PI);
+            ctx.translate(cx, cy);
+            ctx.scale(scale, scale);
+            ctx.translate(-cx, -cy);
+          } else if (anim.type === 'shake') {
+            const offsetX = 6 * Math.sin(life * Math.PI * 8) * life;
+            ctx.translate(offsetX, 0);
+          }
+        }
+        ctx.beginPath(); ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#1b1035'; ctx.fill();
+        drawBrawlerPortrait(brawler, cx, cy, r);
+        ctx.beginPath(); ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+        ctx.strokeStyle = brawler.color; ctx.lineWidth = 2.5; ctx.stroke();
+        ctx.restore();
+      }
+
+      if (state.gameMode === 'coop') {
+        // Two team avatars left of score, side by side
+        drawAvatar(selectedBrawler.p1, W/4 - 62, 52, 22, 'p1');
+        drawAvatar(selectedBrawler.p3, W/4 - 30, 52, 22, 'p3');
+        // Small "+" between them
+        drawOutlinedText('+', W/4 - 46, 78, 10, C.textGray, 'transparent');
+      } else {
+        drawAvatar(selectedBrawler.p1, W/4 - 52, 52, 26, 'p1');
+      }
+      drawAvatar(selectedBrawler.p2, 3*W/4 + 52, 52, 26, 'p2');
 
       // Paddles
       const p1x = 20;
@@ -1060,6 +1593,23 @@
       ctx.shadowBlur = 18;
       drawGem(ball.x, ball.y, BALL_SIZE / 2 + 2);
       ctx.shadowBlur = 0;
+
+      // Serve hint
+      if (state.serving && state.vsTimer === 0) {
+        const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 220);
+        // Pulsing ring around ball
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, BALL_SIZE + 6 * pulse, 0, Math.PI * 2);
+        ctx.strokeStyle = C.accent;
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = pulse * 0.6;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        // Hint text above ball
+        ctx.globalAlpha = pulse;
+        drawOutlinedText('SPACE: Aufschlag', ball.x, ball.y - 28, 16, C.accent, '#000', 3);
+        ctx.globalAlpha = 1;
+      }
 
       // Score flash ring
       if (scoreFlash.active) {
@@ -1193,16 +1743,71 @@
       if (state.over) {
         ctx.fillStyle = 'rgba(10,5,25,0.72)';
         ctx.fillRect(0, 0, W, H);
-        // Glowing panel
+        // Glowing panel (taller to fit portrait)
         ctx.shadowColor = C.accent;
         ctx.shadowBlur = 30;
-        drawRoundedRect(W/2 - 240, H/2 - 90, 480, 175, 18, '#1b1035', C.accent, 5);
+        drawRoundedRect(W/2 - 240, H/2 - 155, 480, 245, 18, '#1b1035', C.accent, 5);
         ctx.shadowBlur = 0;
-        // Stars beside text
-        drawStar(W/2 - 190, H/2 - 30, 20, C.accent, '#7a5200', 2);
-        drawStar(W/2 + 190, H/2 - 30, 20, C.accent, '#7a5200', 2);
-        drawOutlinedText(`${state.winner} gewinnt!`, W/2, H/2 - 14, 42, C.accent, '#000', 5);
-        drawOutlinedText('ENTER: Nochmal  •  ESC: Menü', W/2, H/2 + 44, 18, C.textGray, 'transparent');
+
+        // Determine winner brawler(s)
+        const isTeamWin = state.winner && state.winner.includes('Team');
+        const isBotWin  = state.winner && state.winner.includes('Bot');
+        const winBrawler = isBotWin ? selectedBrawler.p2 : selectedBrawler.p1;
+
+        // Portrait center position
+        const portraitCx = W / 2;
+        const portraitCy = H / 2 - 110;
+        const portraitR  = 70;
+
+        if (isTeamWin) {
+          // Show p1 and p3 side by side
+          const brawlers = [selectedBrawler.p1, selectedBrawler.p3];
+          const offsets  = [-45, 45];
+          brawlers.forEach((b, idx) => {
+            const pcx = portraitCx + offsets[idx];
+            ctx.save();
+            ctx.globalAlpha = 0.2;
+            ctx.beginPath(); ctx.arc(pcx, portraitCy, 55, 0, Math.PI * 2);
+            ctx.fillStyle = b.color; ctx.fill();
+            ctx.globalAlpha = 1;
+            ctx.restore();
+            ctx.save();
+            ctx.beginPath(); ctx.arc(pcx, portraitCy, 38, 0, Math.PI * 2);
+            ctx.clip();
+            drawBrawlerPortrait(b, pcx, portraitCy, 38);
+            ctx.restore();
+            ctx.beginPath(); ctx.arc(pcx, portraitCy, 38, 0, Math.PI * 2);
+            ctx.strokeStyle = b.color; ctx.lineWidth = 4; ctx.stroke();
+            const starAngles = [0, Math.PI/2, Math.PI, 3*Math.PI/2];
+            starAngles.forEach(a => drawStar(pcx + Math.cos(a)*55, portraitCy + Math.sin(a)*55, 7, C.accent, '#7a5200', 1.5));
+          });
+        } else {
+          // Glowing circle background
+          ctx.save();
+          ctx.globalAlpha = 0.2;
+          ctx.beginPath(); ctx.arc(portraitCx, portraitCy, 80, 0, Math.PI * 2);
+          ctx.fillStyle = winBrawler.color; ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.restore();
+          // Portrait clipped to circle
+          ctx.save();
+          ctx.beginPath(); ctx.arc(portraitCx, portraitCy, portraitR, 0, Math.PI * 2);
+          ctx.clip();
+          drawBrawlerPortrait(winBrawler, portraitCx, portraitCy, portraitR);
+          ctx.restore();
+          // Colored stroke ring
+          ctx.beginPath(); ctx.arc(portraitCx, portraitCy, portraitR, 0, Math.PI * 2);
+          ctx.strokeStyle = winBrawler.color; ctx.lineWidth = 4; ctx.stroke();
+          // 4 stars at compass positions
+          const starAngles = [0, Math.PI/2, Math.PI, 3*Math.PI/2];
+          starAngles.forEach(a => drawStar(portraitCx + Math.cos(a)*95, portraitCy + Math.sin(a)*95, 10, C.accent, '#7a5200', 2));
+        }
+
+        // Win text shifted down ~60px
+        drawStar(W/2 - 190, H/2 + 30, 20, C.accent, '#7a5200', 2);
+        drawStar(W/2 + 190, H/2 + 30, 20, C.accent, '#7a5200', 2);
+        drawOutlinedText(`${state.winner} gewinnt!`, W/2, H/2 + 46, 42, C.accent, '#000', 5);
+        drawOutlinedText('ENTER: Nochmal  •  ESC: Menü', W/2, H/2 + 104, 18, C.textGray, 'transparent');
       } else if (state.paused) {
         ctx.fillStyle = 'rgba(10,5,25,0.72)';
         ctx.fillRect(0, 0, W, H);
@@ -1220,6 +1825,42 @@
     // ── Input ─────────────────────────────────────────────────────────────────
     document.addEventListener('keydown', e => {
       if (state.mode === 'menu') {
+        if (state.menuPage === 'brawlers') {
+          const isDuo  = state.gameMode === 'duo';
+          const isCoop = state.gameMode === 'coop';
+          const needsTwoSelections = isDuo || isCoop;
+          const secondSlot = isCoop ? 'p3' : 'p2';
+
+          if (e.key === 'ArrowLeft') {
+            brawlerCursor[brawlerTurn] = (brawlerCursor[brawlerTurn] - 1 + BRAWLERS.length) % BRAWLERS.length;
+          }
+          if (e.key === 'ArrowRight') {
+            brawlerCursor[brawlerTurn] = (brawlerCursor[brawlerTurn] + 1) % BRAWLERS.length;
+          }
+          if (e.key === 'Enter') {
+            if (needsTwoSelections && brawlerTurn === 'p1') {
+              brawlerTurn = secondSlot;
+              // Avoid same brawler as P1
+              if (brawlerCursor[secondSlot] === brawlerCursor.p1) {
+                brawlerCursor[secondSlot] = (brawlerCursor.p1 + 1) % BRAWLERS.length;
+              }
+            } else {
+              startGame();
+            }
+          }
+          if (e.key === 'Escape') {
+            if (needsTwoSelections && brawlerTurn !== 'p1') {
+              brawlerTurn = 'p1';
+            } else {
+              state.menuPage = 'mode';
+              brawlerTurn = 'p1';
+            }
+          }
+          e.preventDefault();
+          return;
+        }
+
+        // Mode selection page
         if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
           const idx = MENU_MODES.findIndex(m => m.key === state.gameMode);
           state.gameMode = MENU_MODES[(idx + (e.key === 'ArrowDown' ? 1 : -1) + MENU_MODES.length) % MENU_MODES.length].key;
@@ -1230,12 +1871,16 @@
           const idx = diffs.indexOf(difficulty);
           difficulty = diffs[(idx + (e.key === 'ArrowRight' ? 1 : -1) + 3) % 3];
         }
-        if (e.key === 'Enter') startGame();
+        if (e.key === 'Enter') state.menuPage = 'brawlers';
         e.preventDefault();
         return;
       }
 
-      if (e.key === 'Escape') { state.mode = 'menu'; infoEl.textContent = ''; return; }
+      if (e.key === 'Escape') { state.mode = 'menu'; state.menuPage = 'mode'; state.vsTimer = 0; brawlerTurn = 'p1'; infoEl.textContent = ''; return; }
+      if (e.key === ' ') {
+        if (state.serving && state.vsTimer === 0) { serveBall(); e.preventDefault(); }
+        return;
+      }
       if (e.key === 'Enter') {
         if (state.over) startGame(); else state.paused = !state.paused;
         return;
