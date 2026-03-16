@@ -1,5 +1,7 @@
 # Brawl Pong
 
+![Brawl Pong main menu](screenshot.png)
+
 A Brawl Stars-themed Pong game playable entirely in the browser — no install, no dependencies, just open `index.html`.
 
 ## Features
